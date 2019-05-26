@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.572
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CameraImporter", "CameraImporter.csproj", "{33E090EE-05AB-4206-8D2F-FC1371FA3705}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{33E090EE-05AB-4206-8D2F-FC1371FA3705}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33E090EE-05AB-4206-8D2F-FC1371FA3705}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33E090EE-05AB-4206-8D2F-FC1371FA3705}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33E090EE-05AB-4206-8D2F-FC1371FA3705}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E5439B5D-7729-4038-9E39-C1F666AFA94E}
+	EndGlobalSection
+EndGlobal

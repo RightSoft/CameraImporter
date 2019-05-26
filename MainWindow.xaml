@@ -1,0 +1,81 @@
+﻿<Window x:Class="CameraImporter.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CameraImporter"
+        xmlns:behaviors="clr-namespace:CameraImporter.Behaviors"
+        mc:Ignorable="d"
+        DataContext="{Binding Source={StaticResource Locator}, Path=Main}"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid Background="White">
+        <Grid Visibility="{Binding IsCameraUpdatePopupVisible, Converter={StaticResource BoolToInverseVisibilityConverter}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="83*"></ColumnDefinition>
+                <ColumnDefinition Width="314*"/>
+                <ColumnDefinition Width="397*"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="40"></RowDefinition>
+            </Grid.RowDefinitions>
+
+            <!-- Settings Panel -->
+            <StackPanel Grid.Column="0" Orientation="Vertical" Margin="10,10,9.8,10" Grid.ColumnSpan="2">
+                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,0,0,5" FontWeight="Bold">LOGIN</TextBlock>
+                <DockPanel Style="{StaticResource MainXamlItemDocker}">
+                    <TextBlock VerticalAlignment="Center" Width="175" Text="Management Server Address:"/>
+                    <TextBox Style="{StaticResource TextboxStyle}" VerticalAlignment="Center" TextAlignment="Left" Margin="5,0" Text="localhost"></TextBox>
+                </DockPanel>
+
+                <DockPanel Style="{StaticResource MainXamlItemDocker}">
+                    <TextBlock VerticalAlignment="Center" Width="175">User Name:</TextBlock>
+                    <TextBox  VerticalAlignment="Center" Style="{StaticResource TextboxStyle}"  Margin="5,0" 
+                          Text=""></TextBox>
+                </DockPanel>
+
+                <DockPanel Style="{StaticResource MainXamlItemDocker}">
+                    <TextBlock VerticalAlignment="Center" Width="175">Password</TextBlock>
+                    <TextBox Style="{StaticResource TextboxStyle}" VerticalAlignment="Center" Margin="5,0" 
+                          Text="{Binding SettingsData.Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                </DockPanel>
+
+                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,15,0,5" FontWeight="Bold">ARCHIVER</TextBlock>
+                <DockPanel Style="{StaticResource MainXamlItemDocker}">
+                    <TextBlock VerticalAlignment="Center" Width="175">Archiver:</TextBlock>
+                    <ComboBox Name="ArchiverSelection" VerticalAlignment="Center" SelectedIndex="0" Margin="5,0"
+                              ItemsSource="{Binding Path=AvailableArchivers}"
+                              SelectionChanged="OnArchiveChanged"
+                              IsEnabled="{Binding IsArchiverSelectionEnabled, Mode=OneWay}">
+                    </ComboBox>
+                </DockPanel>
+            </StackPanel>
+
+            <Grid Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="3" Margin="0,0,396.6,0">
+
+                <Button Style="{StaticResource ButtonStyle}" Visibility="{Binding IsApplicationProcessing,Converter={StaticResource BoolToInverseVisibilityConverter}}"  MaxWidth="100" Margin ="5" Command="{Binding ProcessCommand}">Process</Button>
+                <DockPanel HorizontalAlignment="Stretch" LastChildFill="True" Margin="5" Visibility="{Binding IsApplicationProcessing,Converter={StaticResource BoolToVisibilityConverter}}">
+                    <TextBlock VerticalAlignment="Center" Margin="0,0,15,0" Width="Auto" Text="{Binding ProcessingCategory}"/>
+                    <ProgressBar  MaxHeight="10" HorizontalAlignment="Stretch" Margin="0" Value="{Binding ProgressBarCurrentStepsCount}" Minimum="0" Maximum="{Binding ProgressBarMaximumSteps}" Name="ProgressBar"></ProgressBar>
+                </DockPanel>
+            </Grid>
+
+
+            <!-- Log Panel -->
+            <Grid Name="LogContainer" Background="#dddddd" Grid.Column="2" Grid.Row="0" Margin="0.2,0,-0.4,0">
+                <TextBlock VerticalAlignment="Top" Foreground="#333333" Margin="10" HorizontalAlignment="Left" Width="100" FontWeight="Bold" >LOG</TextBlock>
+                <ScrollViewer behaviors:AutoScrollBehavior.AutoScroll="True"  Height="{Binding ElementName=LogContainer, Path=ActualHeight, Mode=OneWay}" Padding="0,30,0,0" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                    <TextBlock HorizontalAlignment="Stretch" Foreground="#330000" TextWrapping="WrapWithOverflow" Text="{Binding LogText}"></TextBlock>
+                </ScrollViewer>
+            </Grid>
+
+            <StackPanel Grid.Column="2" Grid.Row="1" Orientation="Horizontal"  HorizontalAlignment="Center" Margin="118.2,5,117.6,5">
+                <Button Style="{StaticResource ButtonStyle}" Command="{Binding ExportLogCommand}">Export Log</Button>
+                <Button Style="{StaticResource ButtonStyle}" Command="{Binding ClearLogCommand}" Margin="10,0,0,0">Clear Log</Button>
+            </StackPanel>
+
+        </Grid>
+        <!--<GenetecImporter:ExistingCameraConfirmationPopup Background="White" Visibility="{Binding ElementName=RootWindow, Path=DataContext.IsCameraUpdatePopupVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>-->
+    </Grid>
+</Window>

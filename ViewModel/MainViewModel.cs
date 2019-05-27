@@ -128,6 +128,7 @@ namespace CameraImporter.ViewModel
         private void OnAvailableArchiversFound(object sender, List<EntityModel> e)
         {
             Debug.WriteLine("archiver list");
+            AvailableArchivers = new ObservableCollection<EntityModel>(e);
         }
 
         private void OnExistingCameraListFound(object sender, List<GenetecCamera> existingCameraList)

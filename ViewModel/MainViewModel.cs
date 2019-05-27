@@ -49,7 +49,7 @@ namespace CameraImporter.ViewModel
         public bool IsArchiverSelectionEnabled
         {
             //get => _isArchiverSelectionEnabled;
-            get => true
+            get => true;
             set => Set(nameof(IsArchiverSelectionEnabled), ref _isArchiverSelectionEnabled, value);
         }
 

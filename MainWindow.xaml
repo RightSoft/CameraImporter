@@ -45,7 +45,12 @@
                 <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,15,0,5" FontWeight="Bold">ARCHIVER</TextBlock>
                 <DockPanel Style="{StaticResource MainXamlItemDocker}">
                     <TextBlock VerticalAlignment="Center" Width="175">Archiver:</TextBlock>
-                    <ComboBox Name="ArchiverSelection" VerticalAlignment="Center" SelectedIndex="0" Margin="5,0"
+                    <ComboBox Name="ArchiverSelection" 
+                              VerticalAlignment="Center" 
+                              DisplayMemberPath="EntityName"
+                              SelectedValuePath="EntityGuid"
+                              SelectedIndex="0" 
+                              Margin="5,0"
                               ItemsSource="{Binding Path=AvailableArchivers}"
                               SelectionChanged="OnArchiveChanged"
                               IsEnabled="{Binding IsArchiverSelectionEnabled, Mode=OneWay}">

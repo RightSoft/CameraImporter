@@ -20,14 +20,14 @@ namespace CameraImporter.Shared
 
         private int _processStepCount;
         private SettingsData _settingsData;
-        private List<GenetecCamera> _existingCamerasToBeUpdated;
         private List<GenetecCamera> _cameraListToBeProcessed;
+        private List<GenetecCamera> _existingCamerasToBeUpdated;
 
-        public event EventHandler<ApplicationStateEnum> ApplicationStateChanged;
-        public event EventHandler<int> ProgressBarMaximumStepsChanged;
-        public event EventHandler<List<GenetecCamera>> ExistingCameraListFound;
-        public event EventHandler<List<EntityModel>> AvailableArchiversFound;
         public event EventHandler<int> ProgressBarStepsChanged;
+        public event EventHandler<int> ProgressBarMaximumStepsChanged;
+        public event EventHandler<List<EntityModel>> AvailableArchiversFound;
+        public event EventHandler<List<GenetecCamera>> ExistingCameraListFound;
+        public event EventHandler<ApplicationStateEnum> ApplicationStateChanged;
 
         public FileProcessor(IFileLoader fileLoader,
             ICsvToCameraParser csvToCameraParser,
@@ -48,24 +48,23 @@ namespace CameraImporter.Shared
 
         private void OnExistingCameraListFound(object sender, ExistingCameraListFoundEventArgs e)
         {
-            if (e.IsExistingCamerasFound)
+            if (!e.IsExistingCamerasFound)
             {
                 ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.ApplicationIdle, 1);
+                return;
+            }
 
-                List<GenetecCamera> alreadyExistingCameras =
-                    _genetecSdkWrapper.CheckIfImportedCamerasExists(_cameraListToBeProcessed, _logger);
+            List<GenetecCamera> alreadyExistingCameras =
+                _genetecSdkWrapper.CheckIfImportedCamerasExists(_cameraListToBeProcessed, _logger);
 
-                if (alreadyExistingCameras.Any())
+            if (alreadyExistingCameras.Any())
+            {
+                foreach (var alreadyExistingCamera in alreadyExistingCameras)
                 {
-                    foreach (var alreadyExistingCamera in alreadyExistingCameras)
-                    {
-                        _cameraListToBeProcessed.Remove(alreadyExistingCamera);
-                    }
-
-                    ExistingCameraListFound?.Invoke(this, alreadyExistingCameras);
+                    _cameraListToBeProcessed.Remove(alreadyExistingCamera);
                 }
 
-                return;
+                ExistingCameraListFound?.Invoke(this, alreadyExistingCameras);
             }
         }
 
@@ -81,6 +80,7 @@ namespace CameraImporter.Shared
             if (e.AvailableArchivers.Count == 1)
             {
                 _logger.Log("Only one Archiver found. The import will automatically continue using this Archiver", LogLevel.Info);
+                ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.CheckingExistingCameras, 1);
                 _genetecSdkWrapper.FetchAvailableCameras();
             }
 
@@ -232,27 +232,6 @@ namespace CameraImporter.Shared
         private void UpdateCameraSettings()
         {
 
-        }
-
-        private bool CheckCameraExistingStatus()
-        {
-            ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.CheckingExistingCameras, 1);
-
-            List<GenetecCamera> alreadyExistingCameras =
-                _genetecSdkWrapper.CheckIfImportedCamerasExists(_cameraListToBeProcessed, _logger);
-            if (alreadyExistingCameras.Any())
-            {
-                foreach (var alreadyExistingCamera in alreadyExistingCameras)
-                {
-                    _cameraListToBeProcessed.Remove(alreadyExistingCamera);
-                }
-
-                ExistingCameraListFound?.Invoke(this, alreadyExistingCameras);
-
-                return true;
-            }
-
-            return false;
         }
 
         private void CheckSettingsDataIsValid(SettingsData settingsData)

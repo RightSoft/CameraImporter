@@ -130,12 +130,12 @@ namespace CameraImporter.ViewModel
 
         private void OnExistingCameraListFound(object sender, List<GenetecCamera> existingCameraList)
         {
-            //var cameraConfirmationViewModel = SimpleIoc.Default.GetInstance<ExistingCameraConfirmationPopupViewModel>();
-            //cameraConfirmationViewModel.ExistingCameras = existingCameraList;
-            //cameraConfirmationViewModel.ExistingCamerasText = string.Concat(existingCameraList.Select(p => $"{p.CameraName}{Environment.NewLine}"));
-            //cameraConfirmationViewModel.UpdateConfirmedForExistingCameras += OnUpdateConfirmedForExistingCameras;
+            var cameraConfirmationViewModel = SimpleIoc.Default.GetInstance<ExistingCameraConfirmationPopupViewModel>();
+            cameraConfirmationViewModel.ExistingCameras = existingCameraList;
+            cameraConfirmationViewModel.ExistingCamerasText = string.Concat(existingCameraList.Select(p => $"{p.CameraName}{Environment.NewLine}"));
+            cameraConfirmationViewModel.UpdateConfirmedForExistingCameras += OnUpdateConfirmedForExistingCameras;
 
-            //IsCameraUpdatePopupVisible = true;
+            IsCameraUpdatePopupVisible = true;
         }
 
         private void OnUpdateConfirmedForExistingCameras(object sender, List<GenetecCamera> existingCameras)

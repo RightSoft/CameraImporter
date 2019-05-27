@@ -18,12 +18,8 @@ namespace CameraImporter.SystemSpecific.Genetec
     {
         private Engine m_sdkEngine;
 
-        private readonly Guid _fpsTranslationId = new Guid("d661e46c-dcb0-4402-b9b3-0e9e5d07ffd9");
-        private readonly Guid _codecTranslationId = new Guid("b134d66d-db9c-4822-baa0-5ce4b04ec29a");
-        private readonly Guid _resolutionTranslationId = new Guid("b0323065-599f-4d73-b18e-55c0193368bc");
-
-        private List<EntityModel> _availableArchivers = new List<EntityModel>();
-        private List<EntityModel> _availableCameras = new List<EntityModel>();
+        private readonly List<EntityModel> _existingCameras = new List<EntityModel>();
+        private readonly List<EntityModel> _availableArchivers = new List<EntityModel>();
 
 
         private const string VIDEOSTREAM1_DISPLAYNAME = "Video stream 01";
@@ -31,9 +27,10 @@ namespace CameraImporter.SystemSpecific.Genetec
 
         public event EventHandler<IsLoggedInEventArgs> IsLoggedIn;
         public event EventHandler<AvailableArchiversFoundEventArgs> AvailableArchiversFound;
+        public event EventHandler<ExistingCameraListFoundEventArgs> ExistingCameraListFound;
 
-        private EntityModel m_selectedArchiverModel;
         private EntityModel m_selectedCameraModel;
+        private EntityModel m_selectedArchiverModel;
 
         public GenetecSdkWrapper()
         {
@@ -44,8 +41,10 @@ namespace CameraImporter.SystemSpecific.Genetec
 
         public void Init()
         {
-            m_sdkEngine = new Engine();
-            m_sdkEngine.ClientCertificate = "KxsD11z743Hf5Gq9mv3+5ekxzemlCiUXkTFY5ba1NOGcLCmGstt2n0zYE9NsNimv";
+            m_sdkEngine = new Engine
+            {
+                ClientCertificate = "KxsD11z743Hf5Gq9mv3+5ekxzemlCiUXkTFY5ba1NOGcLCmGstt2n0zYE9NsNimv"
+            };
 
             m_sdkEngine.LoggedOn += SdkEngine_LoggedOn;
             m_sdkEngine.LoggedOff += SdkEngine_LoggedOff;
@@ -59,7 +58,7 @@ namespace CameraImporter.SystemSpecific.Genetec
 
         public void FetchAvailableCameras()
         {
-            System.Windows.Application.Current.Dispatcher.Invoke(_availableCameras.Clear);
+            System.Windows.Application.Current.Dispatcher.Invoke(_existingCameras.Clear);
 
             var camerasQuery = m_sdkEngine.ReportManager.CreateReportQuery(ReportType.EntityConfiguration) as EntityConfigurationQuery;
             camerasQuery?.EntityTypeFilter.Add(EntityType.Camera);
@@ -74,7 +73,7 @@ namespace CameraImporter.SystemSpecific.Genetec
             foreach (DataRow dataRow in results.Data.Rows)
             {
                 Guid cameraguid = (Guid)dataRow[0];
-                if (_availableCameras.Any(o => o.EntityGuid == cameraguid))
+                if (_existingCameras.Any(o => o.EntityGuid == cameraguid))
                 {
                     continue;
                 }
@@ -85,19 +84,24 @@ namespace CameraImporter.SystemSpecific.Genetec
                     continue;
                 }
 
-                System.Windows.Application.Current.Dispatcher.Invoke(new Action(() =>
+                _existingCameras.Add(new EntityModel
                 {
-                    _availableCameras.Add(new EntityModel
-                    {
-                        EntityGuid = cameraguid,
-                        EntityName = cameraEntity.Name,
-                    });
-                }));
+                    EntityGuid = cameraguid,
+                    EntityName = cameraEntity.Name,
+                });
             }
+
+            ExistingCameraListFound?.Invoke(this, new ExistingCameraListFoundEventArgs
+            (
+                _existingCameras.Any(),
+                _existingCameras
+            ));
         }
 
         public void FetchAvailableArchivers()
         {
+            System.Windows.Application.Current.Dispatcher.Invoke(_availableArchivers.Clear);
+
             var archiversQuery = m_sdkEngine.ReportManager.CreateReportQuery(ReportType.EntityConfiguration) as EntityConfigurationQuery;
             archiversQuery?.EntityTypeFilter.Add(EntityType.Role, (byte)RoleType.Archiver);
             archiversQuery?.BeginQuery(OnArchiverQueryReceived, archiversQuery);
@@ -105,8 +109,6 @@ namespace CameraImporter.SystemSpecific.Genetec
 
         private void OnArchiverQueryReceived(IAsyncResult ar)
         {
-            _availableArchivers.Clear();
-
             var archiversQuery = ar.AsyncState as EntityConfigurationQuery;
             var results = archiversQuery?.EndQuery(ar);
 
@@ -178,12 +180,24 @@ namespace CameraImporter.SystemSpecific.Genetec
 
         public List<GenetecCamera> CheckIfImportedCamerasExists(List<GenetecCamera> cameraList, ILogger logger)
         {
-            return null;
+            return cameraList.Where(p => _existingCameras.Select(x => x.EntityName).Contains(p.CameraName)).ToList();
         }
 
         public void Login(SettingsData settingsData)
         {
             m_sdkEngine.BeginLogOn(settingsData.ServerAddress, settingsData.UserName, settingsData.Password);
+        }
+    }
+
+    public class ExistingCameraListFoundEventArgs
+    {
+        public bool IsExistingCamerasFound;
+        public List<EntityModel> ExistingCameras;
+
+        public ExistingCameraListFoundEventArgs(bool isExistingCamerasFound, List<EntityModel> existingCameras)
+        {
+            IsExistingCamerasFound = isExistingCamerasFound;
+            ExistingCameras = existingCameras;
         }
     }
 

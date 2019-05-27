@@ -15,6 +15,7 @@ namespace CameraImporter.SystemSpecific.Genetec.Interface
         void Login(SettingsData settingsData);
         event EventHandler<IsLoggedInEventArgs> IsLoggedIn;
         event EventHandler<AvailableArchiversFoundEventArgs> AvailableArchiversFound;
+        event EventHandler<ExistingCameraListFoundEventArgs> ExistingCameraListFound;
         void Init();
         void Dispose();
         void FetchAvailableArchivers();

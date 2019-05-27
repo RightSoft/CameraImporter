@@ -42,7 +42,33 @@ namespace CameraImporter.Shared
 
             _genetecSdkWrapper.IsLoggedIn += OnLoggedInChanged;
             _genetecSdkWrapper.AvailableArchiversFound += OnAvailableArchiversFound;
+            _genetecSdkWrapper.ExistingCameraListFound += OnExistingCameraListFound;
             _genetecSdkWrapper.Init();
+        }
+
+        private void OnExistingCameraListFound(object sender, ExistingCameraListFoundEventArgs e)
+        {
+            if (e.IsExistingCamerasFound)
+            {
+                ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.ApplicationIdle, 1);
+
+                List<GenetecCamera> alreadyExistingCameras =
+                    _genetecSdkWrapper.CheckIfImportedCamerasExists(_cameraListToBeProcessed, _logger);
+
+                if (alreadyExistingCameras.Any())
+                {
+                    foreach (var alreadyExistingCamera in alreadyExistingCameras)
+                    {
+                        _cameraListToBeProcessed.Remove(alreadyExistingCamera);
+                    }
+
+                    ExistingCameraListFound?.Invoke(this, alreadyExistingCameras);
+                }
+
+                return;
+            }
+
+            ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.CheckingExistingCameras, 1);
         }
 
         private void OnAvailableArchiversFound(object sender, AvailableArchiversFoundEventArgs e)
@@ -94,12 +120,11 @@ namespace CameraImporter.Shared
 
             try
             {
-                if (TryParseCameras())
+                if (!TryParseCameras())
                 {
                     return;
                 }
 
-                FillCameraListWithSettingsData();
                 IncreaseCurrentProgressBarState();
                 ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.LoggingIn, 1);
 
@@ -135,7 +160,7 @@ namespace CameraImporter.Shared
 
                 }
 
-                ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.ApplicationIdle, _cameraListToBeProcessed.Count);
+                //ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.ApplicationIdle, _cameraListToBeProcessed.Count);
             }
             catch (Exception e)
             {
@@ -147,7 +172,6 @@ namespace CameraImporter.Shared
         private bool ValidateLoginInformation(SettingsData settingsData)
             => settingsData != null &&
                    !string.IsNullOrEmpty(settingsData.UserName) &&
-                   !string.IsNullOrEmpty(settingsData.Password) &&
                    !string.IsNullOrEmpty(settingsData.ServerAddress);
 
         private void Login(SettingsData settingsData)
@@ -189,17 +213,10 @@ namespace CameraImporter.Shared
             {
                 ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.ApplicationIdle, 1);
                 _logger.Log("Can\'t import, camera list is empty.", LogLevel.Error);
-                return true;
+                return false;
             }
 
-            return false;
-        }
-
-        private void FillCameraListWithSettingsData()
-        {
-            foreach (var camera in _cameraListToBeProcessed)
-            {
-            }
+            return true;
         }
 
         private void AddCameras()

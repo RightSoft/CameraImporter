@@ -67,8 +67,6 @@ namespace CameraImporter.Shared
 
                 return;
             }
-
-            ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.CheckingExistingCameras, 1);
         }
 
         private void OnAvailableArchiversFound(object sender, AvailableArchiversFoundEventArgs e)
@@ -83,12 +81,14 @@ namespace CameraImporter.Shared
             if (e.AvailableArchivers.Count == 1)
             {
                 _logger.Log("Only one Archiver found. The import will automatically continue using this Archiver", LogLevel.Info);
+                _genetecSdkWrapper.FetchAvailableCameras();
             }
 
             if (e.AvailableArchivers.Count > 1)
             {
                 ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.ApplicationIdle, 1);
                 _logger.Log("Multiple Archivers found. Please select which Archiver you want to proceed", LogLevel.Warning);
+                return;
             }
 
             AvailableArchiversFound?.Invoke(this, e.AvailableArchivers);
@@ -110,7 +110,6 @@ namespace CameraImporter.Shared
             }
 
             _genetecSdkWrapper.FetchAvailableArchivers();
-            _genetecSdkWrapper.FetchAvailableCameras();
         }
 
         public void Process(SettingsData settingsData)

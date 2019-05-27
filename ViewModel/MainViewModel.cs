@@ -5,6 +5,8 @@ using CameraImporter.Shared;
 using CameraImporter.Shared.Interface;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
+using GalaSoft.MvvmLight.Ioc;
+using MilestoneImporter.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

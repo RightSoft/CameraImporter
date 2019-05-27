@@ -130,6 +130,7 @@
     <Compile Include="SystemSpecific\Genetec\Interface\IGenetecSdkWrapper.cs" />
     <Compile Include="SystemSpecific\Genetec\SdkAssemblyLoader.cs" />
     <Compile Include="Utils\EncryptionUtil.cs" />
+    <Compile Include="ViewModel\ExistingCameraConfirmationPopupViewModel.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\SettingsData.cs" />
     <Compile Include="ViewModel\ViewModelLocator.cs" />

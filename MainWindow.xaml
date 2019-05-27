@@ -26,13 +26,14 @@
                 <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,0,0,5" FontWeight="Bold">LOGIN</TextBlock>
                 <DockPanel Style="{StaticResource MainXamlItemDocker}">
                     <TextBlock VerticalAlignment="Center" Width="175" Text="Management Server Address:"/>
-                    <TextBox Style="{StaticResource TextboxStyle}" VerticalAlignment="Center" TextAlignment="Left" Margin="5,0" Text="localhost"></TextBox>
+                    <TextBox Style="{StaticResource TextboxStyle}" VerticalAlignment="Center" TextAlignment="Left" Margin="5,0" 
+                             Text="{Binding SettingsData.ServerAddress}"></TextBox>
                 </DockPanel>
 
                 <DockPanel Style="{StaticResource MainXamlItemDocker}">
                     <TextBlock VerticalAlignment="Center" Width="175">User Name:</TextBlock>
                     <TextBox  VerticalAlignment="Center" Style="{StaticResource TextboxStyle}"  Margin="5,0" 
-                          Text=""></TextBox>
+                          Text="{Binding SettingsData.UserName}"></TextBox>
                 </DockPanel>
 
                 <DockPanel Style="{StaticResource MainXamlItemDocker}">

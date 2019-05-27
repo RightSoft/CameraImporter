@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -161,9 +162,9 @@ namespace CameraImporter.ViewModel
         {
             var defaultSettingsData = new SettingsData
             {
-                ServerName = System.Net.Dns.GetHostName(),
                 ServerAddress = "localhost",
-                UserName = System.Security.Principal.WindowsIdentity.GetCurrent().Name
+                UserName = System.Security.Principal.WindowsIdentity.GetCurrent().Name.Split('\\').Last(),
+                Password = string.Empty
             };
             SettingsData = defaultSettingsData;
         }

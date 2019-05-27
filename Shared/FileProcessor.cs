@@ -47,7 +47,25 @@ namespace CameraImporter.Shared
 
         private void OnAvailableArchiversFound(object sender, AvailableArchiversFoundEventArgs e)
         {
-            Debug.WriteLine("Archiver found");
+            if (!e.IsArchiversFound)
+            {
+                ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.ApplicationIdle, 1);
+                _logger.Log("No Archiver found. Add an Archiver to proceed", LogLevel.Error);
+                return;
+            }
+
+            if (e.AvailableArchivers.Count == 1)
+            {
+                _logger.Log("Only one Archiver found. The import will automatically continue using this Archiver", LogLevel.Info);
+            }
+
+            if (e.AvailableArchivers.Count > 1)
+            {
+                ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.ApplicationIdle, 1);
+                _logger.Log("Multiple Archivers found. Please select which Archiver you want to proceed", LogLevel.Warning);
+            }
+
+            AvailableArchiversFound?.Invoke(this, e.AvailableArchivers);
         }
 
         private void OnLoggedInChanged(object sender, IsLoggedInEventArgs e)
@@ -181,7 +199,6 @@ namespace CameraImporter.Shared
         {
             foreach (var camera in _cameraListToBeProcessed)
             {
-                camera.ServerName = _settingsData.ServerName;
             }
         }
 
@@ -225,7 +242,6 @@ namespace CameraImporter.Shared
         private void CheckSettingsDataIsValid(SettingsData settingsData)
         {
             string exceptionOnProperty = String.Empty;
-            if (string.IsNullOrEmpty(settingsData.ServerName)) { exceptionOnProperty = "Server name"; }
 
             if (!string.IsNullOrEmpty(exceptionOnProperty))
             {

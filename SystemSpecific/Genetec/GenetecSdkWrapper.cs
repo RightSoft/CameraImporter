@@ -45,6 +45,7 @@ namespace CameraImporter.SystemSpecific.Genetec
         public void Init()
         {
             m_sdkEngine = new Engine();
+            m_sdkEngine.ClientCertificate = "KxsD11z743Hf5Gq9mv3+5ekxzemlCiUXkTFY5ba1NOGcLCmGstt2n0zYE9NsNimv";
 
             m_sdkEngine.LoggedOn += SdkEngine_LoggedOn;
             m_sdkEngine.LoggedOff += SdkEngine_LoggedOff;
@@ -104,6 +105,8 @@ namespace CameraImporter.SystemSpecific.Genetec
 
         private void OnArchiverQueryReceived(IAsyncResult ar)
         {
+            _availableArchivers.Clear();
+
             var archiversQuery = ar.AsyncState as EntityConfigurationQuery;
             var results = archiversQuery?.EndQuery(ar);
 
@@ -111,7 +114,6 @@ namespace CameraImporter.SystemSpecific.Genetec
             {
                 return;
             }
-
 
             foreach (DataRow dataRow in results.Data.Rows)
             {

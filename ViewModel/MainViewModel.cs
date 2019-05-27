@@ -33,12 +33,12 @@ namespace CameraImporter.ViewModel
         private double _progressBarCurrentStepsCount;
         private bool _canProcess = true;
         private bool _canExportLog = true;
-        private bool _isUserNameEnabled;
-        private bool _isPasswordEnabled;
+        private bool _isArchiverSelectionEnabled;
         private bool _isApplicationProcessing;
         private string _logText = "";
         private string _processingCategory;
         private bool _isCameraUpdatePopupVisible;
+        private EntityModel _selectedArchiverModel;
 
         public bool IsCameraUpdatePopupVisible
         {
@@ -46,16 +46,11 @@ namespace CameraImporter.ViewModel
             set => Set(nameof(IsCameraUpdatePopupVisible), ref _isCameraUpdatePopupVisible, value);
         }
 
-        public bool IsUserNameEnabled
+        public bool IsArchiverSelectionEnabled
         {
-            get => _isUserNameEnabled;
-            set => Set(nameof(IsUserNameEnabled), ref _isUserNameEnabled, value);
-        }
-
-        public bool IsPasswordEnabled
-        {
-            get => _isPasswordEnabled;
-            set => Set(nameof(IsPasswordEnabled), ref _isPasswordEnabled, value);
+            //get => _isArchiverSelectionEnabled;
+            get => true
+            set => Set(nameof(IsArchiverSelectionEnabled), ref _isArchiverSelectionEnabled, value);
         }
 
         public string LogText
@@ -98,6 +93,21 @@ namespace CameraImporter.ViewModel
         {
             get => _settingsData;
             set => Set(nameof(SettingsData), ref _settingsData, value);
+        }
+
+        public EntityModel SelectedArchiverModel
+        {
+            get { return _selectedArchiverModel; }
+            set
+            {
+                if (value == _selectedArchiverModel)
+                {
+                    return;
+                }
+
+                _selectedArchiverModel = value;
+                //OnPropertyChanged(nameof(SelectedArchiverModel));
+            }
         }
 
         public RelayCommand ProcessCommand { get; private set; }

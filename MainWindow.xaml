@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CameraImporter"
         xmlns:behaviors="clr-namespace:CameraImporter.Behaviors"
+        xmlns:genetec="clr-namespace:CameraImporter.Model.Genetec"
         mc:Ignorable="d"
         DataContext="{Binding Source={StaticResource Locator}, Path=Main}"
         Title="MainWindow" Height="450" Width="800">
@@ -47,14 +48,20 @@
                     <TextBlock VerticalAlignment="Center" Width="175">Archiver:</TextBlock>
                     <ComboBox Name="ArchiverSelection" 
                               VerticalAlignment="Center" 
-                              DisplayMemberPath="EntityName"
-                              SelectedValuePath="EntityGuid"
                               SelectedIndex="0" 
                               Margin="5,0"
                               ItemsSource="{Binding Path=AvailableArchivers}"
+                              SelectedItem="{Binding SelectedArchiverModel}"
                               SelectionChanged="OnArchiveChanged"
                               IsEnabled="{Binding IsArchiverSelectionEnabled, Mode=OneWay}">
-                    </ComboBox>
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type genetec:EntityModel}">
+                                        <StackPanel Orientation="Horizontal" Margin="2">
+                                            <TextBlock Margin="2" Text="{Binding EntityName}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
                 </DockPanel>
             </StackPanel>
 

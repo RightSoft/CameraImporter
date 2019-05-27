@@ -11,7 +11,5 @@
         public string Password { get; set; }
         public string Manufacturer { get; set; } = "onvif";
         public string ProductType { get; set; } = "All";
-
-        public string ServerName { get; set; }
     }
 }

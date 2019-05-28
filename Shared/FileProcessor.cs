@@ -60,7 +60,7 @@ namespace CameraImporter.Shared
 
         private void OnExistingCameraListFound(object sender, ExistingCameraListFoundEventArgs e)
         {
-            if (!e.IsExistingCamerasFound)
+            if (!e.IsExistingCamerasFound) 
             {
                 _logger.Log("There are no cameras added to Genetec prior to this import process.", LogLevel.Info);
 

@@ -50,26 +50,28 @@ namespace CameraImporter.Shared
         {
             if (!e.IsExistingCamerasFound)
             {
-                _logger.Log("There are no cameras added to Genetec.", LogLevel.Info);
+                _logger.Log("There are no cameras added to Genetec prior to this import process.", LogLevel.Info);
 
                 IncreaseCurrentProgressBarState();
 
-                return;
+                AddCameras();
             }
-
-            List<GenetecCamera> matchingExistingCameras =
-                _genetecSdkWrapper.CheckIfImportedCamerasExists(_cameraListToBeProcessed, _logger);
-
-            if (matchingExistingCameras.Any())
+            else
             {
-                foreach (var alreadyExistingCamera in matchingExistingCameras)
+                List<GenetecCamera> matchingExistingCameras =
+                    _genetecSdkWrapper.CheckIfImportedCamerasExists(_cameraListToBeProcessed, _logger);
+
+                if (matchingExistingCameras.Any())
                 {
-                    _cameraListToBeProcessed.Remove(alreadyExistingCamera);
+                    foreach (var alreadyExistingCamera in matchingExistingCameras)
+                    {
+                        _cameraListToBeProcessed.Remove(alreadyExistingCamera);
+                    }
+
+                    IncreaseCurrentProgressBarState();
+
+                    ExistingCameraListFound?.Invoke(this, matchingExistingCameras);
                 }
-
-                IncreaseCurrentProgressBarState();
-
-                ExistingCameraListFound?.Invoke(this, matchingExistingCameras);
             }
         }
 

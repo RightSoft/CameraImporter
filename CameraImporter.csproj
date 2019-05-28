@@ -110,6 +110,7 @@
     <Compile Include="Behaviors\AutoScrollBehavior.cs" />
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
     <Compile Include="Extensions\EnumExtension.cs" />
+    <Compile Include="Extensions\StringExtension.cs" />
     <Compile Include="Model\BaseCamera.cs" />
     <Compile Include="Model\CameraValidationSettings.cs" />
     <Compile Include="Model\Genetec\EntityModel.cs" />

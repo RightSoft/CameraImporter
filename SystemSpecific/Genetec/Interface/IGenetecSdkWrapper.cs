@@ -22,5 +22,6 @@ namespace CameraImporter.SystemSpecific.Genetec.Interface
         void Dispose();
         void FetchAvailableArchivers();
         void FetchAvailableCameras();
+        void FetchAvailableVideoUnits();
     }
 }

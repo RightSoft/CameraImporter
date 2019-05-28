@@ -55,7 +55,7 @@ namespace CameraImporter.Shared
             var addedCamera = _cameraListToBeProcessed.FirstOrDefault(p => p.Ip.Equals(e.EntityName));
 
             if (addedCamera != null)
-                addedCamera.Guid = e.EntityGuid.ToString().Left(17); //we do this because enrollment doesn't return camera 
+                addedCamera.Guid = e.EntityGuid.ToString().Right(17); //we do this because enrollment doesn't return camera 
         }
 
         private void OnExistingCameraListFound(object sender, ExistingCameraListFoundEventArgs e)

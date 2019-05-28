@@ -74,6 +74,10 @@ namespace CameraImporter.SystemSpecific.Genetec
                 foreach (Guid camId in camGuids)
                 {
                     var cam = (VideoUnit)m_sdkEngine.GetEntity(camId);
+                    foreach (var item in cam.HierarchicalChildren)
+                    {
+
+                    }
                     if (cam == null)
                         continue;
                 }

@@ -24,10 +24,15 @@ namespace CameraImporter.ViewModel
         private readonly ILogger _logger;
         private readonly IFileSystemWrapper _fileSystemWrapper;
         private ApplicationStateEnum _processCategoryEnum;
+        private ObservableCollection<EntityModel> _availableArchivers;
 
-        public ObservableCollection<EntityModel> AvailableArchivers { get; set; }
+        public ObservableCollection<EntityModel> AvailableArchivers {
+            get => _availableArchivers;
+            set => Set(nameof(AvailableArchivers), ref _availableArchivers, value);
+        }
 
         private SettingsData _settingsData;
+        private EntityModel _selectedArchiverModel;
 
         private int _progressBarMaximumSteps;
         private double _progressBarCurrentStepsCount;
@@ -38,7 +43,6 @@ namespace CameraImporter.ViewModel
         private string _logText = "";
         private string _processingCategory;
         private bool _isCameraUpdatePopupVisible;
-        private EntityModel _selectedArchiverModel;
 
         public bool IsCameraUpdatePopupVisible
         {
@@ -106,7 +110,6 @@ namespace CameraImporter.ViewModel
                 }
 
                 _selectedArchiverModel = value;
-                //OnPropertyChanged(nameof(SelectedArchiverModel));
             }
         }
 
@@ -119,6 +122,7 @@ namespace CameraImporter.ViewModel
             _logger = logger;
             _fileSystemWrapper = fileSystemWrapper;
             _fileProcessor = fileProcessor;
+            AvailableArchivers = new ObservableCollection<EntityModel>();
             _fileProcessor.AvailableArchiversFound += OnAvailableArchiversFound;
             _fileProcessor.ExistingCameraListFound += OnExistingCameraListFound;
 
@@ -138,6 +142,7 @@ namespace CameraImporter.ViewModel
         private void OnAvailableArchiversFound(object sender, List<EntityModel> e)
         {
             Debug.WriteLine("archiver list");
+            
             AvailableArchivers = new ObservableCollection<EntityModel>(e);
         }
 

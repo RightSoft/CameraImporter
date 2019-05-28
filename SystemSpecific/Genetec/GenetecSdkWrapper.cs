@@ -155,7 +155,7 @@ namespace CameraImporter.SystemSpecific.Genetec
             IsLoggedIn?.Invoke(this, new IsLoggedInEventArgs($"SDK Logon Failed. Reason: {e.FormattedErrorMessage}", false));
         }
 
-        public bool AddCamera(GenetecCamera cameraData, ILogger logger)
+        public bool AddCamera(GenetecCamera cameraData, ILogger logger, SettingsData settingsData)
         {
             logger.Log($"Camera added successfully: {cameraData.CameraName}", LogLevel.Info);
 
@@ -177,7 +177,7 @@ namespace CameraImporter.SystemSpecific.Genetec
                 Password = CreateSecureString(cameraData.Password)
             };
 
-            AddUnitResponse response = m_sdkEngine.VideoUnitManager.AddVideoUnit(addVideoUnitInfos, m_selectedArchiverModel.EntityGuid).Result;
+            AddUnitResponse response = m_sdkEngine.VideoUnitManager.AddVideoUnit(addVideoUnitInfos, settingsData.Archiver.EntityGuid).Result;
 
             return true;
         }

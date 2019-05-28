@@ -89,8 +89,7 @@ namespace CameraImporter.Shared
                 _logger.Log($"Only one Archiver found (Archiver Name:{e.AvailableArchivers.First().EntityName} The import will automatically continue using this Archiver", LogLevel.Info);
                 ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.CheckingExistingCameras, 1);
 
-                _settingsData.ArchiverName = e.AvailableArchivers.FirstOrDefault()?.EntityName;
-                _settingsData.ArchiverGuid = e.AvailableArchivers.FirstOrDefault()?.EntityGuid.ToString();
+                _settingsData.Archiver = e.AvailableArchivers.FirstOrDefault();
 
                 _genetecSdkWrapper.FetchAvailableCameras();
             }

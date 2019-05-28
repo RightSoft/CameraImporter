@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using CameraImporter.Model.Genetec;
 using CameraImporter.ViewModel;
 
 namespace CameraImporter
@@ -18,7 +19,7 @@ namespace CameraImporter
 
         private void OnArchiveChanged(object sender, SelectionChangedEventArgs e)
         {
-            ViewModel.SettingsData.ArchiverName = ArchiverSelection.SelectedValue.ToString();
+            ViewModel.SettingsData.Archiver = ViewModel.SelectedArchiverModel;
         }
     }
 }

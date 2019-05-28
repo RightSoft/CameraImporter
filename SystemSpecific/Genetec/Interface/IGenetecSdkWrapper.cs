@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using CameraImporter.Model.Genetec;
+﻿using CameraImporter.Model.Genetec;
 using CameraImporter.Shared.Interface;
 using CameraImporter.ViewModel;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace CameraImporter.SystemSpecific.Genetec.Interface
 {
@@ -17,6 +17,7 @@ namespace CameraImporter.SystemSpecific.Genetec.Interface
         event EventHandler<IsLoggedInEventArgs> IsLoggedIn;
         event EventHandler<AvailableArchiversFoundEventArgs> AvailableArchiversFound;
         event EventHandler<ExistingCameraListFoundEventArgs> ExistingCameraListFound;
+        event EventHandler<EntityModel> AddingCameraCompleted;
         void Init();
         void Dispose();
         void FetchAvailableArchivers();

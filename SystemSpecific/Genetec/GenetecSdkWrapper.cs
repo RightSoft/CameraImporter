@@ -6,16 +6,17 @@ using CameraImporter.ViewModel;
 using Genetec.Sdk;
 using Genetec.Sdk.Entities;
 using Genetec.Sdk.Entities.Video;
+using Genetec.Sdk.EventsArgs;
 using Genetec.Sdk.Queries;
 using Genetec.Sdk.Workflows.UnitManager;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Linq;
 using System.Net;
 using System.Security;
 using System.Threading.Tasks;
-using Genetec.Sdk.EventsArgs;
 
 namespace CameraImporter.SystemSpecific.Genetec
 {
@@ -28,6 +29,7 @@ namespace CameraImporter.SystemSpecific.Genetec
 
         public event EventHandler<IsLoggedInEventArgs> IsLoggedIn;
         public event EventHandler<AvailableArchiversFoundEventArgs> AvailableArchiversFound;
+        public event EventHandler<EntityModel> AddingCameraCompleted;
         public event EventHandler<ExistingCameraListFoundEventArgs> ExistingCameraListFound;
 
         public void Init()
@@ -54,6 +56,28 @@ namespace CameraImporter.SystemSpecific.Genetec
             var camerasQuery = m_sdkEngine.ReportManager.CreateReportQuery(ReportType.EntityConfiguration) as EntityConfigurationQuery;
             camerasQuery?.EntityTypeFilter.Add(EntityType.Camera);
             camerasQuery?.BeginQuery(OnCameraQueryReceived, camerasQuery);
+        }
+
+        public void FetchAvailableVideoUnits()
+        {
+            System.Windows.Application.Current.Dispatcher.Invoke(_existingCameras.Clear);
+
+            var camerasQuery = m_sdkEngine.ReportManager.CreateReportQuery(ReportType.EntityConfiguration) as EntityConfigurationQuery;
+            camerasQuery?.EntityTypeFilter.Add(EntityType.VideoUnit);
+            QueryCompletedEventArgs results = camerasQuery.Query();
+
+            if (results.Data != null)
+            {
+                List<Guid> camGuids = results.Data.Rows.Cast<DataRow>().Select(row => (Guid)row[0]).ToList();
+
+                // Add all cameras found by the SDK engine to the local list
+                foreach (Guid camId in camGuids)
+                {
+                    var cam = (VideoUnit)m_sdkEngine.GetEntity(camId);
+                    if (cam == null)
+                        continue;
+                }
+            }
         }
 
         //public void FetchAvailableCamerasReturnList()
@@ -155,9 +179,9 @@ namespace CameraImporter.SystemSpecific.Genetec
 
         private void VideoUnitManager_EnrollmentStatusChanged(object sender, UnitEnrolledEventArgs e)
         {
-            if(e.EnrollmentResult==EnrollmentResult.Added)
+            if (e.EnrollmentResult == EnrollmentResult.Added)
             {
-                
+                AddingCameraCompleted?.Invoke(this, new EntityModel { EntityName = e.Address, EntityGuid = e.Unit });
             }
 
             //DisplayLog("Enrollement status changed: " + e.EnrollmentResult);
@@ -242,7 +266,7 @@ namespace CameraImporter.SystemSpecific.Genetec
                 {
                     logger.Log(
                         $"Response{Environment.NewLine}Error: {response.Error} {Environment.NewLine}Missing Information: {response.MissingInformation}", LogLevel.Error);
-                }                
+                }
             }
             else
             {

@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using CameraImporter.Extensions;
 
 namespace CameraImporter.Shared
 {
@@ -43,7 +44,18 @@ namespace CameraImporter.Shared
             _genetecSdkWrapper.IsLoggedIn += OnLoggedInChanged;
             _genetecSdkWrapper.AvailableArchiversFound += OnAvailableArchiversFound;
             _genetecSdkWrapper.ExistingCameraListFound += OnExistingCameraListFound;
+            _genetecSdkWrapper.AddingCameraCompleted += OnAddingCameraCompleted;
             _genetecSdkWrapper.Init();
+        }
+
+        private void OnAddingCameraCompleted(object sender, EntityModel e)
+        {
+            _logger.Log($"Camera added successfully: {e.EntityName}", LogLevel.Info);
+
+            var addedCamera = _cameraListToBeProcessed.FirstOrDefault(p => p.Ip.Equals(e.EntityName));
+
+            if (addedCamera != null)
+                addedCamera.Guid = e.EntityGuid.ToString().Left(17); //we do this because enrollment doesn't return camera 
         }
 
         private void OnExistingCameraListFound(object sender, ExistingCameraListFoundEventArgs e)
@@ -94,6 +106,8 @@ namespace CameraImporter.Shared
                 _settingsData.Archiver = e.AvailableArchivers.FirstOrDefault();
 
                 _genetecSdkWrapper.FetchAvailableCameras();
+
+                _genetecSdkWrapper.FetchAvailableVideoUnits();
             }
 
             if (e.AvailableArchivers.Count > 1)

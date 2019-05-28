@@ -30,9 +30,6 @@ namespace CameraImporter.SystemSpecific.Genetec
         public event EventHandler<AvailableArchiversFoundEventArgs> AvailableArchiversFound;
         public event EventHandler<ExistingCameraListFoundEventArgs> ExistingCameraListFound;
 
-        private EntityModel m_selectedCameraModel;
-        private EntityModel m_selectedArchiverModel;
-
         public void Init()
         {
             m_sdkEngine = new Engine
@@ -43,20 +40,11 @@ namespace CameraImporter.SystemSpecific.Genetec
             m_sdkEngine.LoggedOn += SdkEngine_LoggedOn;
             m_sdkEngine.LoggedOff += SdkEngine_LoggedOff;
             m_sdkEngine.LogonFailed += SdkEngine_LogonFailed;
-            m_sdkEngine.EntitiesAdded += M_sdkEngine_EntitiesAdded;
         }
 
         public void Dispose()
         {
             SdkAssemblyLoader.Stop();
-        }
-
-        private void M_sdkEngine_EntitiesAdded(object sender, EntitiesAddedEventArgs e)
-        {
-            if (e.Entities.Any(o => o.EntityType == EntityType.Camera))
-            {
-                return;
-            }
         }
 
         public void FetchAvailableCameras()
@@ -167,6 +155,11 @@ namespace CameraImporter.SystemSpecific.Genetec
 
         private void VideoUnitManager_EnrollmentStatusChanged(object sender, UnitEnrolledEventArgs e)
         {
+            if(e.EnrollmentResult==EnrollmentResult.Added)
+            {
+                
+            }
+
             //DisplayLog("Enrollement status changed: " + e.EnrollmentResult);
         }
 
@@ -222,7 +215,6 @@ namespace CameraImporter.SystemSpecific.Genetec
 
         public async Task<bool> AddCamera(GenetecCamera cameraData, ILogger logger, SettingsData settingsData)
         {
-
             var videoUnitProductInfo =
                 m_sdkEngine.VideoUnitManager
                     .FindProductsByManufacturer(cameraData.Manufacturer)
@@ -250,11 +242,7 @@ namespace CameraImporter.SystemSpecific.Genetec
                 {
                     logger.Log(
                         $"Response{Environment.NewLine}Error: {response.Error} {Environment.NewLine}Missing Information: {response.MissingInformation}", LogLevel.Error);
-                }
-                else
-                {
-                    logger.Log($"Camera added successfully: {cameraData.CameraName}", LogLevel.Info);
-                }
+                }                
             }
             else
             {

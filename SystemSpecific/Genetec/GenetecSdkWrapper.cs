@@ -13,7 +13,6 @@ using System.Data;
 using System.Linq;
 using System.Net;
 using System.Security;
-using System.Threading.Tasks;
 using Genetec.Sdk.Workflows.UnitManager;
 
 namespace CameraImporter.SystemSpecific.Genetec
@@ -42,11 +41,19 @@ namespace CameraImporter.SystemSpecific.Genetec
             m_sdkEngine.LoggedOn += SdkEngine_LoggedOn;
             m_sdkEngine.LoggedOff += SdkEngine_LoggedOff;
             m_sdkEngine.LogonFailed += SdkEngine_LogonFailed;
+            m_sdkEngine.EntitiesAdded += M_sdkEngine_EntitiesAdded;
         }
 
         public void Dispose()
         {
             SdkAssemblyLoader.Stop();
+        }
+
+        private void M_sdkEngine_EntitiesAdded(object sender, EntitiesAddedEventArgs e)
+        {
+            if (e.Entities.Any(o => o.EntityType == EntityType.Camera))
+                return;
+                //FetchAvailableCameras();
         }
 
         public void FetchAvailableCameras()
@@ -148,7 +155,7 @@ namespace CameraImporter.SystemSpecific.Genetec
             IsLoggedIn?.Invoke(this, new IsLoggedInEventArgs($"SDK Logon Failed. Reason: {e.FormattedErrorMessage}", false));
         }
 
-        public async Task<bool> AddCamera(GenetecCamera cameraData, ILogger logger)
+        public bool AddCamera(GenetecCamera cameraData, ILogger logger)
         {
             logger.Log($"Camera added successfully: {cameraData.CameraName}", LogLevel.Info);
 
@@ -170,7 +177,7 @@ namespace CameraImporter.SystemSpecific.Genetec
                 Password = CreateSecureString(cameraData.Password)
             };
 
-            AddUnitResponse response = await m_sdkEngine.VideoUnitManager.AddVideoUnit(addVideoUnitInfos, m_selectedArchiverModel.EntityGuid);
+            AddUnitResponse response = m_sdkEngine.VideoUnitManager.AddVideoUnit(addVideoUnitInfos, m_selectedArchiverModel.EntityGuid).Result;
 
             return true;
         }

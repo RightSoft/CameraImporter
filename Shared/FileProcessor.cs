@@ -55,7 +55,9 @@ namespace CameraImporter.Shared
             var addedCamera = _cameraListToBeProcessed.FirstOrDefault(p => p.Ip.Equals(e.EntityName));
 
             if (addedCamera != null)
-                addedCamera.Guid = e.EntityGuid.ToString().Right(17); //we do this because enrollment doesn't return camera 
+                //we do this because enrollment doesn't return camera guid and we have to query the server 3 times to get that value
+                //these last 17 characters are the same for the unit and children
+                addedCamera.Guid = e.EntityGuid.ToString().Right(17); 
         }
 
         private void OnExistingCameraListFound(object sender, ExistingCameraListFoundEventArgs e)
@@ -106,8 +108,6 @@ namespace CameraImporter.Shared
                 _settingsData.Archiver = e.AvailableArchivers.FirstOrDefault();
 
                 _genetecSdkWrapper.FetchAvailableCameras();
-
-                _genetecSdkWrapper.FetchAvailableVideoUnits();
             }
 
             if (e.AvailableArchivers.Count > 1)
@@ -265,6 +265,7 @@ namespace CameraImporter.Shared
 
         private void UpdateCameraSettings()
         {
+            _genetecSdkWrapper.FetchAvailableCamerasForSettingsUpdateSync();
             ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.UpdatingSettings, _cameraListToBeProcessed.Count);
 
             _processStepCount = 0;

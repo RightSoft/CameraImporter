@@ -1,9 +1,9 @@
-﻿using CameraImporter.Model.Genetec;
-using CameraImporter.Shared.Interface;
-using CameraImporter.ViewModel;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Threading.Tasks;
+using CameraImporter.ViewModel;
+using System.Collections.Generic;
+using CameraImporter.Model.Genetec;
+using CameraImporter.Shared.Interface;
 
 namespace CameraImporter.SystemSpecific.Genetec.Interface
 {
@@ -22,6 +22,6 @@ namespace CameraImporter.SystemSpecific.Genetec.Interface
         void Dispose();
         void FetchAvailableArchivers();
         void FetchAvailableCameras();
-        void FetchAvailableVideoUnits();
+        void FetchAvailableCamerasForSettingsUpdateSync();
     }
 }

@@ -234,7 +234,7 @@ namespace CameraImporter.Shared
 
             foreach (var camera in _cameraListToBeProcessed)
             {
-                _genetecSdkWrapper.AddCamera(camera, _logger);
+                _genetecSdkWrapper.AddCamera(camera, _logger, _settingsData);
                 IncreaseCurrentProgressBarState();
             }
         }

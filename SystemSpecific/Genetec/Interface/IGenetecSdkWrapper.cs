@@ -8,7 +8,7 @@ namespace CameraImporter.SystemSpecific.Genetec.Interface
 {
     public interface IGenetecSdkWrapper
     {
-        bool AddCamera(GenetecCamera cameraData, ILogger logger);
+        bool AddCamera(GenetecCamera cameraData, ILogger logger, SettingsData settingsData);
         bool UpdateAddedCameraSettings(GenetecCamera cameraData, ILogger logger);
         bool CheckIfServerExists(string settingsDataServerName, out string availableServerNames);
         List<GenetecCamera> CheckIfImportedCamerasExists(List<GenetecCamera> cameraListToBeProcessed, ILogger logger);

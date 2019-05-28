@@ -5,12 +5,16 @@ using CameraImporter.SystemSpecific.Genetec.Interface;
 using CameraImporter.ViewModel;
 using Genetec.Sdk;
 using Genetec.Sdk.Entities;
+using Genetec.Sdk.Entities.Video;
 using Genetec.Sdk.Queries;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
 using System.Linq;
+using System.Net;
+using System.Security;
+using System.Threading.Tasks;
+using Genetec.Sdk.Workflows.UnitManager;
 
 namespace CameraImporter.SystemSpecific.Genetec
 {
@@ -21,23 +25,12 @@ namespace CameraImporter.SystemSpecific.Genetec
         private readonly List<EntityModel> _existingCameras = new List<EntityModel>();
         private readonly List<EntityModel> _availableArchivers = new List<EntityModel>();
 
-
-        private const string VIDEOSTREAM1_DISPLAYNAME = "Video stream 01";
-        private const string VIDEOSTREAM2_DISPLAYNAME = "Video stream 02";
-
         public event EventHandler<IsLoggedInEventArgs> IsLoggedIn;
         public event EventHandler<AvailableArchiversFoundEventArgs> AvailableArchiversFound;
         public event EventHandler<ExistingCameraListFoundEventArgs> ExistingCameraListFound;
 
         private EntityModel m_selectedCameraModel;
         private EntityModel m_selectedArchiverModel;
-
-        public GenetecSdkWrapper()
-        {
-            Debug.WriteLine("genetec constructor");
-
-            SdkAssemblyLoader.Start();
-        }
 
         public void Init()
         {
@@ -155,9 +148,29 @@ namespace CameraImporter.SystemSpecific.Genetec
             IsLoggedIn?.Invoke(this, new IsLoggedInEventArgs($"SDK Logon Failed. Reason: {e.FormattedErrorMessage}", false));
         }
 
-        public bool AddCamera(GenetecCamera cameraData, ILogger logger)
+        public async Task<bool> AddCamera(GenetecCamera cameraData, ILogger logger)
         {
             logger.Log($"Camera added successfully: {cameraData.CameraName}", LogLevel.Info);
+
+            var videoUnitProductInfo =
+                m_sdkEngine.VideoUnitManager
+                    .FindProductsByManufacturer(cameraData.Manufacturer)
+                    .FirstOrDefault(x => x.ProductType == cameraData.ProductType);
+
+            if (!IPAddress.TryParse(cameraData.Ip, out IPAddress unitAddress))
+            {
+                logger.Log($"Unable to parse Ip Address for {cameraData.CameraName}", LogLevel.Error);
+                return false;
+            }
+
+            var ip = new IPEndPoint(unitAddress, cameraData.Port);
+            var addVideoUnitInfos = new AddVideoUnitInfo(videoUnitProductInfo, ip, false)
+            {
+                UserName = cameraData.UserName,
+                Password = CreateSecureString(cameraData.Password)
+            };
+
+            AddUnitResponse response = await m_sdkEngine.VideoUnitManager.AddVideoUnit(addVideoUnitInfos, m_selectedArchiverModel.EntityGuid);
 
             return true;
         }
@@ -186,6 +199,18 @@ namespace CameraImporter.SystemSpecific.Genetec
         public void Login(SettingsData settingsData)
         {
             m_sdkEngine.BeginLogOn(settingsData.ServerAddress, settingsData.UserName, settingsData.Password);
+        }
+
+        private SecureString CreateSecureString(string str)
+        {
+            var sec = new SecureString();
+
+            if (!string.IsNullOrEmpty(str))
+            {
+                str.ToCharArray().ToList().ForEach(sec.AppendChar);
+            }
+
+            return sec;
         }
     }
 

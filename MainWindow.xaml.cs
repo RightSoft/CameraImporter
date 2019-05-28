@@ -18,7 +18,7 @@ namespace CameraImporter
 
         private void OnArchiveChanged(object sender, SelectionChangedEventArgs e)
         {
-            //ViewModel.SettingsData.ArchiverName = ArchiverSelection.SelectedValue.ToString();
+            ViewModel.SettingsData.ArchiverName = ArchiverSelection.SelectedValue.ToString();
         }
     }
 }

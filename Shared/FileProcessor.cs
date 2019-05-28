@@ -55,6 +55,8 @@ namespace CameraImporter.Shared
                 IncreaseCurrentProgressBarState();
 
                 AddCameras();
+
+                UpdateCameraSettings();
             }
             else
             {
@@ -234,19 +236,35 @@ namespace CameraImporter.Shared
 
             foreach (var camera in _cameraListToBeProcessed)
             {
-                _genetecSdkWrapper.AddCamera(camera, _logger, _settingsData);
+                if (_genetecSdkWrapper.AddCamera(camera, _logger, _settingsData).Result)
+                {
+                    _logger.Log($"Camera added successfully: {camera.CameraName}", LogLevel.Info);
+                }
+                else
+                {
+                    _logger.Log($"Adding camera failed: {camera.CameraName}", LogLevel.Warning);
+                }
+
                 IncreaseCurrentProgressBarState();
             }
         }
 
         private void UpdateCameraSettings()
         {
+            ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.UpdatingSettings, _cameraListToBeProcessed.Count);
 
+            _processStepCount = 0;
+            ProgressBarStepsChanged?.Invoke(this, _processStepCount);
+            foreach (var camera in _cameraListToBeProcessed)
+            {
+                _genetecSdkWrapper.UpdateAddedCameraSettings(camera, _logger);
+                IncreaseCurrentProgressBarState();
+            }
         }
 
         private void CheckSettingsDataIsValid(SettingsData settingsData)
         {
-            string exceptionOnProperty = String.Empty;
+            string exceptionOnProperty = string.Empty;
 
             if (!string.IsNullOrEmpty(exceptionOnProperty))
             {

@@ -7,14 +7,15 @@ using Genetec.Sdk;
 using Genetec.Sdk.Entities;
 using Genetec.Sdk.Entities.Video;
 using Genetec.Sdk.Queries;
+using Genetec.Sdk.Workflows.UnitManager;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Net;
 using System.Security;
-using Genetec.Sdk.Workflows.UnitManager;
 using System.Threading.Tasks;
+using Genetec.Sdk.EventsArgs;
 
 namespace CameraImporter.SystemSpecific.Genetec
 {
@@ -53,8 +54,9 @@ namespace CameraImporter.SystemSpecific.Genetec
         private void M_sdkEngine_EntitiesAdded(object sender, EntitiesAddedEventArgs e)
         {
             if (e.Entities.Any(o => o.EntityType == EntityType.Camera))
+            {
                 return;
-                //FetchAvailableCameras();
+            }
         }
 
         public void FetchAvailableCameras()
@@ -65,6 +67,61 @@ namespace CameraImporter.SystemSpecific.Genetec
             camerasQuery?.EntityTypeFilter.Add(EntityType.Camera);
             camerasQuery?.BeginQuery(OnCameraQueryReceived, camerasQuery);
         }
+
+        //public void FetchAvailableCamerasReturnList()
+        //{
+        //    var camerasQuery = m_sdkEngine.ReportManager.CreateReportQuery(ReportType.EntityConfiguration) as EntityConfigurationQuery;
+        //    camerasQuery?.EntityTypeFilter.Add(EntityType.Camera);
+        //    QueryCompletedEventArgs results = camerasQuery?.Query();
+
+        //    Collection<GenetecCamera> cameras = new Collection<GenetecCamera>();
+
+        //    if (results.Data != null)
+        //    {
+        //        List<Guid> camGuids = results.Data.Rows.Cast<DataRow>().Select(row => (Guid)row[0]).ToList();
+
+        //        // Add all cameras found by the SDK engine to the local list
+        //        foreach (Guid camId in camGuids)
+        //        {
+        //            var cam = (Camera)m_sdkEngine.GetEntity(camId);
+        //            if (cam == null)
+        //                continue;
+
+        //            cam.RecordingConfiguration.RetentionPeriod = new TimeSpan(10, 0, 0, 0);
+
+        //            var attr = cam.ScheduledVideoAttributes;
+
+        //            ReadOnlyCollection<Guid> allStreams = cam.Streams;
+
+        //            ///m_sdkEngine.DeleteEntity(cam);
+        //            foreach (Guid guid in allStreams)
+        //            {
+        //                VideoStream videoStream = m_sdkEngine.GetEntity(guid) as VideoStream;
+
+        //                var schedule = videoStream.VideoCompressions[0].Schedule;
+        //                videoStream.SetFrameRate(schedule, 10);
+        //                videoStream.SetResolution(schedule, 10);
+        //                var resolutions = videoStream.VideoCompressionCapabilities.SupportedResolutions;
+        //                var encoder = videoStream.VideoCompressionAlgorithm;
+        //                //videoStream.VideoCompressionAlgorithm = VideoCompressionAlgorithmType.Mpeg4;
+        //            }
+
+        //            var unit = cam.Unit;
+
+        //            Dispatcher.BeginInvoke(new Action(() =>
+        //            {
+        //                Cameras.Add(new CameraModel
+        //                {
+        //                    CameraGuid = camId,
+        //                    CameraName = cam.Name,
+        //                    CameraIcon = cam.GetIcon(true)
+        //                });
+        //            }));
+        //        }
+        //    }
+
+
+        //}
 
         private void OnCameraQueryReceived(IAsyncResult ar)
         {
@@ -108,6 +165,11 @@ namespace CameraImporter.SystemSpecific.Genetec
             archiversQuery?.BeginQuery(OnArchiverQueryReceived, archiversQuery);
         }
 
+        private void VideoUnitManager_EnrollmentStatusChanged(object sender, UnitEnrolledEventArgs e)
+        {
+            //DisplayLog("Enrollement status changed: " + e.EnrollmentResult);
+        }
+
         private void OnArchiverQueryReceived(IAsyncResult ar)
         {
             var archiversQuery = ar.AsyncState as EntityConfigurationQuery;
@@ -144,11 +206,13 @@ namespace CameraImporter.SystemSpecific.Genetec
         private void SdkEngine_LoggedOn(object sender, LoggedOnEventArgs e)
         {
             IsLoggedIn?.Invoke(this, new IsLoggedInEventArgs("SDK Logged on", true));
+            m_sdkEngine.VideoUnitManager.EnrollmentStatusChanged += VideoUnitManager_EnrollmentStatusChanged;
         }
 
         private void SdkEngine_LoggedOff(object sender, LoggedOffEventArgs e)
         {
             IsLoggedIn?.Invoke(this, new IsLoggedInEventArgs("SDK Logged off", false));
+            m_sdkEngine.VideoUnitManager.EnrollmentStatusChanged -= VideoUnitManager_EnrollmentStatusChanged;
         }
 
         private void SdkEngine_LogonFailed(object sender, LogonFailedEventArgs e)
@@ -158,7 +222,6 @@ namespace CameraImporter.SystemSpecific.Genetec
 
         public async Task<bool> AddCamera(GenetecCamera cameraData, ILogger logger, SettingsData settingsData)
         {
-            logger.Log($"Camera added successfully: {cameraData.CameraName}", LogLevel.Info);
 
             var videoUnitProductInfo =
                 m_sdkEngine.VideoUnitManager
@@ -178,7 +241,25 @@ namespace CameraImporter.SystemSpecific.Genetec
                 Password = CreateSecureString(cameraData.Password)
             };
 
-            AddUnitResponse response = await m_sdkEngine.VideoUnitManager.AddVideoUnit(addVideoUnitInfos, settingsData.Archiver.EntityGuid);
+            AddUnitResponse response =
+                await m_sdkEngine.VideoUnitManager.AddVideoUnit(addVideoUnitInfos, settingsData.Archiver.EntityGuid);
+
+            if (response != null)
+            {
+                if (!response.Error.Equals(Error.None))
+                {
+                    logger.Log(
+                        $"Response{Environment.NewLine}Error: {response.Error} {Environment.NewLine}Missing Information: {response.MissingInformation}", LogLevel.Error);
+                }
+                else
+                {
+                    logger.Log($"Camera added successfully: {cameraData.CameraName}", LogLevel.Info);
+                }
+            }
+            else
+            {
+                logger.Log($"There was no response from the server for the adding {cameraData.CameraName} task", LogLevel.Info);
+            }
 
             return true;
         }

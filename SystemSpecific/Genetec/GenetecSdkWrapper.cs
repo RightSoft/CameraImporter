@@ -14,6 +14,7 @@ using System.Linq;
 using System.Net;
 using System.Security;
 using Genetec.Sdk.Workflows.UnitManager;
+using System.Threading.Tasks;
 
 namespace CameraImporter.SystemSpecific.Genetec
 {
@@ -155,7 +156,7 @@ namespace CameraImporter.SystemSpecific.Genetec
             IsLoggedIn?.Invoke(this, new IsLoggedInEventArgs($"SDK Logon Failed. Reason: {e.FormattedErrorMessage}", false));
         }
 
-        public bool AddCamera(GenetecCamera cameraData, ILogger logger, SettingsData settingsData)
+        public async Task<bool> AddCamera(GenetecCamera cameraData, ILogger logger, SettingsData settingsData)
         {
             logger.Log($"Camera added successfully: {cameraData.CameraName}", LogLevel.Info);
 
@@ -177,7 +178,7 @@ namespace CameraImporter.SystemSpecific.Genetec
                 Password = CreateSecureString(cameraData.Password)
             };
 
-            AddUnitResponse response = m_sdkEngine.VideoUnitManager.AddVideoUnit(addVideoUnitInfos, settingsData.Archiver.EntityGuid).Result;
+            AddUnitResponse response = await m_sdkEngine.VideoUnitManager.AddVideoUnit(addVideoUnitInfos, settingsData.Archiver.EntityGuid);
 
             return true;
         }

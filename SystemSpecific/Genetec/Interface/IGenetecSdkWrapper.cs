@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using CameraImporter.Model.Genetec;
 using CameraImporter.Shared.Interface;
 using CameraImporter.ViewModel;
@@ -8,7 +9,7 @@ namespace CameraImporter.SystemSpecific.Genetec.Interface
 {
     public interface IGenetecSdkWrapper
     {
-        bool AddCamera(GenetecCamera cameraData, ILogger logger, SettingsData settingsData);
+        Task<bool> AddCamera(GenetecCamera cameraData, ILogger logger, SettingsData settingsData);
         bool UpdateAddedCameraSettings(GenetecCamera cameraData, ILogger logger);
         bool CheckIfServerExists(string settingsDataServerName, out string availableServerNames);
         List<GenetecCamera> CheckIfImportedCamerasExists(List<GenetecCamera> cameraListToBeProcessed, ILogger logger);

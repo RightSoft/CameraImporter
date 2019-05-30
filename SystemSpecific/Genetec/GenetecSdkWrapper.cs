@@ -26,7 +26,6 @@ namespace CameraImporter.SystemSpecific.Genetec
 
         private readonly List<EntityModel> _existingCameras = new List<EntityModel>();
         private readonly List<EntityModel> _availableArchivers = new List<EntityModel>();
-        private List<string> _allCameraGuidsAfterAddingNewCameras = new List<string>();
 
         public event EventHandler<IsLoggedInEventArgs> IsLoggedIn;
         public event EventHandler<AvailableArchiversFoundEventArgs> AvailableArchiversFound;
@@ -65,7 +64,7 @@ namespace CameraImporter.SystemSpecific.Genetec
             var cameraQuery = ar.AsyncState as EntityConfigurationQuery;
             var results = cameraQuery?.EndQuery(ar);
 
-            foreach (DataRow dataRow in results.Data.Rows)
+            foreach (DataRow dataRow in results?.Data?.Rows)
             {
                 Guid cameraguid = (Guid)dataRow[0];
                 if (_existingCameras.Any(o => o.EntityGuid == cameraguid))
@@ -205,7 +204,7 @@ namespace CameraImporter.SystemSpecific.Genetec
                 $"\nWill now attpemt to add settings for: {cameraData.CameraName}",
                 LogLevel.Warning);
 
-            var currentCameraGuid = _existingCameras.Select(p => p.EntityGuid.ToString()).ToList().Where(p => p.Contains(cameraData.Guid)).FirstOrDefault();
+            var currentCameraGuid = _existingCameras.Select(p => p.EntityGuid.ToString()).ToList().FirstOrDefault(p => p.Contains(cameraData.Guid));
 
             Camera cameraToBeUpdated = null;
             if (currentCameraGuid != null && !string.IsNullOrEmpty(currentCameraGuid))
@@ -224,24 +223,31 @@ namespace CameraImporter.SystemSpecific.Genetec
                 var stream2AlgorithmType = MapImportedCamAlgorithmType(cameraData.Stream2Codec);
 
                 bool isUseFirstStream = false;
-                bool isUseSecondStream = false;
+
+                bool firstStreamUsed = false;
+                bool secondStreamUsed = false;
 
                 foreach (Guid guid in cameraToBeUpdated.Streams)
                 {
                     VideoStream videoStream = _mSdkEngine.GetEntity(guid) as VideoStream;
 
-                    if (videoStream == null || !videoStream.VideoCompressions.Any() || videoStream.VideoCompressions.First().Schedule == null) continue;
+                    if (!VideoStreamIsUpdatable(videoStream, stream1AlgorithmType, stream2AlgorithmType, firstStreamUsed, secondStreamUsed)) { continue; }
 
                     var schedule = videoStream.VideoCompressions.First().Schedule;
                     var capabilities = videoStream.VideoCompressionCapabilities;
 
-                    if (stream1AlgorithmType == videoStream.VideoCompressionAlgorithm)
+                    if (!firstStreamUsed && stream1AlgorithmType == videoStream.VideoCompressionAlgorithm)
+                    {
                         isUseFirstStream = true;
+                        firstStreamUsed = true;
+                    }
                     else if (stream2AlgorithmType == videoStream.VideoCompressionAlgorithm)
-                        isUseSecondStream = true;
+                    {
+                        secondStreamUsed = true;
+                    }
 
                     videoStream.SetFrameRate(schedule, TryToGetFpsValue(isUseFirstStream ? cameraData.Stream1Fps : cameraData.Stream2Fps, capabilities, logger));
-                    videoStream.SetResolution(schedule, TryToGetResolution(isUseFirstStream ? cameraData.Stream1Codec : cameraData.Stream2Fps, isUseFirstStream ? cameraData.Stream1Resolution : cameraData.Stream2Resolution, capabilities, logger));
+                    videoStream.SetResolution(schedule, TryToGetResolution(isUseFirstStream ? cameraData.Stream1Resolution : cameraData.Stream2Resolution, capabilities, logger));
                 }
             }
             else
@@ -253,30 +259,67 @@ namespace CameraImporter.SystemSpecific.Genetec
             return true;
         }
 
+        private bool VideoStreamIsUpdatable(VideoStream videoStream,
+            VideoCompressionAlgorithmType stream1AlgorithmType,
+            VideoCompressionAlgorithmType stream2AlgorithmType,
+            bool firstStreamUsed,
+            bool secondStreamUsed)
+        {
+            if (videoStream == null ||
+                !videoStream.VideoCompressions.Any() ||
+                !firstStreamUsed ||
+                !secondStreamUsed ||
+                stream1AlgorithmType != videoStream.VideoCompressionAlgorithm &&
+                stream2AlgorithmType != videoStream.VideoCompressionAlgorithm)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         private VideoCompressionAlgorithmType MapImportedCamAlgorithmType(string codec)
         {
             if (codec.Contains(VideoCompressionAlgorithmType.H264.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
                 return VideoCompressionAlgorithmType.H264;
-            else if (codec.Contains(VideoCompressionAlgorithmType.HEVC.ToString(), StringComparison.OrdinalIgnoreCase))
+            }
+
+            if (codec.Contains(VideoCompressionAlgorithmType.HEVC.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
                 return VideoCompressionAlgorithmType.HEVC;
-            else if (codec.Contains(VideoCompressionAlgorithmType.Jpeg.ToString(), StringComparison.OrdinalIgnoreCase))
+            }
+
+            if (codec.Contains(VideoCompressionAlgorithmType.Jpeg.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
                 return VideoCompressionAlgorithmType.Jpeg;
-            else if (codec.Contains(VideoCompressionAlgorithmType.Mpeg2.ToString(), StringComparison.OrdinalIgnoreCase))
+            }
+
+            if (codec.Contains(VideoCompressionAlgorithmType.Mpeg2.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
                 return VideoCompressionAlgorithmType.Mpeg2;
-            else if (codec.Contains(VideoCompressionAlgorithmType.Mpeg4.ToString(), StringComparison.OrdinalIgnoreCase))
+            }
+
+            if (codec.Contains(VideoCompressionAlgorithmType.Mpeg4.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
                 return VideoCompressionAlgorithmType.Mpeg4;
-            else if (codec.Contains(VideoCompressionAlgorithmType.Wavelet.ToString(), StringComparison.OrdinalIgnoreCase))
+            }
+
+            if (codec.Contains(VideoCompressionAlgorithmType.Wavelet.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
                 return VideoCompressionAlgorithmType.Wavelet;
-            else return VideoCompressionAlgorithmType.Unknown;
+            }
+
+            return VideoCompressionAlgorithmType.Unknown;
         }
 
-        private StreamSupportedResolution TryToGetResolution(string codec, string resolution, VideoCompressionCapabilities capabilities, ILogger logger)
+        private StreamSupportedResolution TryToGetResolution(string resolution, VideoCompressionCapabilities capabilities, ILogger logger)
         {
-            var supportedResolution = capabilities.SupportedResolutions.Where(p => p.ToString() == resolution).First();
+            var supportedResolution = capabilities.SupportedResolutions.First(p => p.ToString() == resolution);
 
             if (supportedResolution == null)
             {
-                logger.Log($"Resolution {resolution} isn't supported for this camera. Value is set to default {capabilities.SupportedResolutions.First().ToString()}", LogLevel.Warning);
+                logger.Log($"Resolution {resolution} isn't supported for this camera. Value is set to default {capabilities.SupportedResolutions.First()}", LogLevel.Warning);
                 supportedResolution = capabilities.SupportedResolutions.First();
             }
 
@@ -288,7 +331,9 @@ namespace CameraImporter.SystemSpecific.Genetec
             if (int.TryParse(stream1Fps, out int parsedFpsValue))
             {
                 if (capabilities.MaxFrameRate > parsedFpsValue && parsedFpsValue > capabilities.MinFrameRate)
+                {
                     return parsedFpsValue;
+                }
                 else
                 {
                     logger.Log($"Frame Rate value {stream1Fps} isn't in available range of {capabilities.MinFrameRate} and {capabilities.MaxFrameRate}. Default value {capabilities.MinFrameRate} is being used", LogLevel.Warning);

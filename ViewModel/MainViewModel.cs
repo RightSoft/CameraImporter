@@ -26,7 +26,8 @@ namespace CameraImporter.ViewModel
         private ApplicationStateEnum _processCategoryEnum;
         private ObservableCollection<EntityModel> _availableArchivers;
 
-        public ObservableCollection<EntityModel> AvailableArchivers {
+        public ObservableCollection<EntityModel> AvailableArchivers
+        {
             get => _availableArchivers;
             set => Set(nameof(AvailableArchivers), ref _availableArchivers, value);
         }
@@ -52,8 +53,7 @@ namespace CameraImporter.ViewModel
 
         public bool IsArchiverSelectionEnabled
         {
-            //get => _isArchiverSelectionEnabled;
-            get => true;
+            get => _isArchiverSelectionEnabled;
             set => Set(nameof(IsArchiverSelectionEnabled), ref _isArchiverSelectionEnabled, value);
         }
 
@@ -141,9 +141,16 @@ namespace CameraImporter.ViewModel
 
         private void OnAvailableArchiversFound(object sender, List<EntityModel> e)
         {
-            Debug.WriteLine("archiver list");
-            
             AvailableArchivers = new ObservableCollection<EntityModel>(e);
+
+            if (AvailableArchivers.Count > 1)
+            {
+                IsArchiverSelectionEnabled = true;
+            }
+            else
+            {
+                IsArchiverSelectionEnabled = false;
+            }
         }
 
         private void OnExistingCameraListFound(object sender, List<GenetecCamera> existingCameraList)

@@ -277,7 +277,6 @@ namespace CameraImporter.Shared
 
         private void UpdateCameraSettings()
         {
-            _genetecSdkWrapper.FetchAvailableCameras();
             ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.UpdatingSettings, _cameraListToBeProcessed.Count);
 
             _processStepCount = 0;

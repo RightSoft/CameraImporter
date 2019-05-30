@@ -27,5 +27,14 @@ namespace CameraImporter.Extensions
             Array.Reverse(charArray);
             return new string(charArray);
         }
+
+        public static bool Contains(this string source, string toCheck, StringComparison comp)
+        {
+            if (source == null)
+                return false;
+
+            return source.IndexOf(toCheck, comp) >= 0;
+        }
+
     }
 }

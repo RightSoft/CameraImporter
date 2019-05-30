@@ -26,7 +26,7 @@
             <StackPanel Grid.Column="0" Orientation="Vertical" Margin="10,10,9.8,10" Grid.ColumnSpan="2">
                 <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,0,0,5" FontWeight="Bold">LOGIN</TextBlock>
                 <DockPanel Style="{StaticResource MainXamlItemDocker}">
-                    <TextBlock VerticalAlignment="Center" Width="175" Text="Management Server Address:"/>
+                    <TextBlock VerticalAlignment="Center" Width="175" Text="Directory Server Name:"/>
                     <TextBox Style="{StaticResource TextboxStyle}" VerticalAlignment="Center" TextAlignment="Left" Margin="5,0" 
                              Text="{Binding SettingsData.ServerAddress}"></TextBox>
                 </DockPanel>

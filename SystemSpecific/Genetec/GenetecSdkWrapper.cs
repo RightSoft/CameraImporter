@@ -58,18 +58,6 @@ namespace CameraImporter.SystemSpecific.Genetec
             camerasQuery?.BeginQuery(OnCameraQueryReceived, camerasQuery);
         }
 
-        public void FetchAvailableCamerasForSettingsUpdateSync()
-        {
-            var camerasQuery = _mSdkEngine.ReportManager.CreateReportQuery(ReportType.EntityConfiguration) as EntityConfigurationQuery;
-            camerasQuery?.EntityTypeFilter.Add(EntityType.Camera);
-            QueryCompletedEventArgs results = camerasQuery?.Query();
-
-            if (results?.Data != null)
-            {
-                _allCameraGuidsAfterAddingNewCameras = results.Data.Rows.Cast<DataRow>().Select(row => ((Guid)row[0]).ToString()).ToList();
-            }
-        }
-
         private void OnCameraQueryReceived(IAsyncResult ar)
         {
             var cameraQuery = ar.AsyncState as EntityConfigurationQuery;
@@ -233,7 +221,8 @@ namespace CameraImporter.SystemSpecific.Genetec
 
         public List<GenetecCamera> CheckIfImportedCamerasExists(List<GenetecCamera> cameraList, ILogger logger)
         {
-            return cameraList.Where(p => _existingCameras.Select(x => x.EntityName).Contains(p.CameraName)).ToList();
+            var cameraNamesList = _existingCameras.Select(x => x.EntityName).ToList();
+            return cameraList.Where(p => cameraNamesList.Contains(p.Ip)).ToList();
         }
 
         public void Login(SettingsData settingsData)

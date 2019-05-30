@@ -222,8 +222,6 @@ namespace CameraImporter.SystemSpecific.Genetec
                 var stream1AlgorithmType = MapImportedCamAlgorithmType(cameraData.Stream1Codec);
                 var stream2AlgorithmType = MapImportedCamAlgorithmType(cameraData.Stream2Codec);
 
-                bool isUseFirstStream = false;
-
                 bool firstStreamUsed = false;
                 bool secondStreamUsed = false;
 
@@ -231,23 +229,26 @@ namespace CameraImporter.SystemSpecific.Genetec
                 {
                     VideoStream videoStream = _mSdkEngine.GetEntity(guid) as VideoStream;
 
-                    if (!VideoStreamIsUpdatable(videoStream, stream1AlgorithmType, stream2AlgorithmType, firstStreamUsed, secondStreamUsed)) { continue; }
+                    if (firstStreamUsed && secondStreamUsed) break;
+
+                    if (!VideoStreamIsUpdatable(videoStream, stream1AlgorithmType, stream2AlgorithmType)) { continue; }
 
                     var schedule = videoStream.VideoCompressions.First().Schedule;
                     var capabilities = videoStream.VideoCompressionCapabilities;
 
                     if (!firstStreamUsed && stream1AlgorithmType == videoStream.VideoCompressionAlgorithm)
                     {
-                        isUseFirstStream = true;
                         firstStreamUsed = true;
-                    }
-                    else if (stream2AlgorithmType == videoStream.VideoCompressionAlgorithm)
-                    {
-                        secondStreamUsed = true;
+                        UpdateCameraSettings(videoStream, schedule, cameraData.Stream1Fps, cameraData.Stream1Resolution, capabilities, logger);
+                        continue;
                     }
 
-                    videoStream.SetFrameRate(schedule, TryToGetFpsValue(isUseFirstStream ? cameraData.Stream1Fps : cameraData.Stream2Fps, capabilities, logger));
-                    videoStream.SetResolution(schedule, TryToGetResolution(isUseFirstStream ? cameraData.Stream1Resolution : cameraData.Stream2Resolution, capabilities, logger));
+                    if (!secondStreamUsed && stream2AlgorithmType == videoStream.VideoCompressionAlgorithm)
+                    {
+                        secondStreamUsed = true;
+                        UpdateCameraSettings(videoStream, schedule, cameraData.Stream2Fps, cameraData.Stream2Resolution, capabilities, logger);
+                        continue;
+                    }
                 }
             }
             else
@@ -256,21 +257,24 @@ namespace CameraImporter.SystemSpecific.Genetec
             }
 
             logger.Log($"Settings update completed for camera {cameraData.CameraName}\n", LogLevel.Info);
+
             return true;
+        }
+
+        private void UpdateCameraSettings(VideoStream videoStream, Guid schedule, string fps, string resolution, VideoCompressionCapabilities capabilities, ILogger logger)
+        {
+            videoStream.SetFrameRate(schedule, TryToGetFpsValue(fps, capabilities, logger));
+            videoStream.SetResolution(schedule, TryToGetResolution(resolution, capabilities, logger));
         }
 
         private bool VideoStreamIsUpdatable(VideoStream videoStream,
             VideoCompressionAlgorithmType stream1AlgorithmType,
-            VideoCompressionAlgorithmType stream2AlgorithmType,
-            bool firstStreamUsed,
-            bool secondStreamUsed)
+            VideoCompressionAlgorithmType stream2AlgorithmType)
         {
             if (videoStream == null ||
                 !videoStream.VideoCompressions.Any() ||
-                !firstStreamUsed ||
-                !secondStreamUsed ||
-                stream1AlgorithmType != videoStream.VideoCompressionAlgorithm &&
-                stream2AlgorithmType != videoStream.VideoCompressionAlgorithm)
+                (stream1AlgorithmType != videoStream.VideoCompressionAlgorithm &&
+                 stream2AlgorithmType != videoStream.VideoCompressionAlgorithm))
             {
                 return false;
             }
@@ -373,7 +377,10 @@ namespace CameraImporter.SystemSpecific.Genetec
 
         public void Login(SettingsData settingsData)
         {
-            _mSdkEngine.BeginLogOn(settingsData.ServerAddress, settingsData.UserName, settingsData.Password);
+            if (_mSdkEngine != null && !_mSdkEngine.IsConnected)
+                _mSdkEngine.BeginLogOn(settingsData.ServerAddress, settingsData.UserName, settingsData.Password);
+            else
+                IsLoggedIn?.Invoke(this, new IsLoggedInEventArgs("SDK Logged on", true));
         }
 
         private SecureString CreateSecureString(string str)

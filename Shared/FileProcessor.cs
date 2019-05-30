@@ -107,6 +107,8 @@ namespace CameraImporter.Shared
             else
             {
                 UpdateCameraSettings();
+                ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.ApplicationIdle, 1);
+                _isUpdating = false;
             }
         }
 
@@ -286,6 +288,8 @@ namespace CameraImporter.Shared
                 _genetecSdkWrapper.UpdateAddedCameraSettings(camera, _logger);
                 IncreaseCurrentProgressBarState();
             }
+
+            LogImportingCompleted();
         }
 
         private void CheckSettingsDataIsValid(SettingsData settingsData)

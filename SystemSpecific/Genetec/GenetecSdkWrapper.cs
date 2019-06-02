@@ -106,7 +106,11 @@ namespace CameraImporter.SystemSpecific.Genetec
         {
             if (e.EnrollmentResult == EnrollmentResult.Added)
             {
-                AddingCameraCompleted?.Invoke(this, new EntityModel { EntityName = e.Address, EntityGuid = e.Unit });
+                AddingCameraCompleted?.Invoke(this, new EntityModel
+                {
+                    EntityName = e.Address,
+                    EntityGuid = e.Unit
+                });
             }
         }
 
@@ -173,9 +177,11 @@ namespace CameraImporter.SystemSpecific.Genetec
                     .FindProductsByManufacturer(cameraData.Manufacturer)
                     .FirstOrDefault(x => x.ProductType == cameraData.ProductType);
 
+            logger.Log($"Adding {cameraData.CameraName}.", LogLevel.Info);
+
             if (!IPAddress.TryParse(cameraData.Ip, out IPAddress unitAddress))
             {
-                logger.Log($"Unable to parse Ip Address for {cameraData.CameraName}", LogLevel.Error);
+                logger.Log($"Can't add camera. Unable to parse Ip Address for {cameraData.CameraName}", LogLevel.Error);
                 return false;
             }
 
@@ -186,24 +192,42 @@ namespace CameraImporter.SystemSpecific.Genetec
                 Password = CreateSecureString(cameraData.Password)
             };
 
-
-            AddUnitResponse response =
-                await _mSdkEngine.VideoUnitManager.AddVideoUnit(addVideoUnitInfo, settingsData.Archiver.EntityGuid);
-
-            if (response != null)
+            CheckIfUsernameAndPasswordEmptyForCameraAndWarnUser(logger, cameraData);
+            try
             {
-                if (!response.Error.Equals(Error.None))
+                AddUnitResponse response =
+                            await _mSdkEngine.VideoUnitManager.AddVideoUnit(addVideoUnitInfo, settingsData.Archiver.EntityGuid);
+
+                if (response != null)
                 {
-                    logger.Log(
-                        $"Error: {response.Error} {Environment.NewLine} Missing Information: {response.MissingInformation}", LogLevel.Error);
+                    if (!response.Error.Equals(Error.None))
+                    {
+                        logger.Log($"Error: {response.Error} {Environment.NewLine} Missing Information: {response.MissingInformation}", LogLevel.Error);
+                        return false;
+                    }
                 }
-            }
-            else
-            {
-                logger.Log($"There was no response from the server for the adding {cameraData.CameraName} task", LogLevel.Info);
-            }
+                else
+                {
+                    logger.Log($"There was no response from the server for the adding {cameraData.CameraName} task", LogLevel.Error);
+                    return false;
+                }
 
-            return true;
+                return true;
+            }
+            catch
+            {
+                logger.Log($"Adding camera failed! Make sure DNA has correct username and password values for the camera: {cameraData.CameraName}.", LogLevel.Error);
+                return false;
+            }
+        }
+
+        private void CheckIfUsernameAndPasswordEmptyForCameraAndWarnUser(ILogger logger, GenetecCamera cameraData)
+        {
+            if (string.IsNullOrEmpty(cameraData.UserName))
+                logger.Log($"Username is empty for camera!", LogLevel.Warning);
+
+            if (string.IsNullOrEmpty(cameraData.Password))
+                logger.Log($"Password is empty for camera!", LogLevel.Warning);
         }
 
         public void UpdateAddedCameraSettings(GenetecCamera cameraData, ILogger logger)
@@ -211,6 +235,14 @@ namespace CameraImporter.SystemSpecific.Genetec
             logger.Log(
                 $"Will now attpemt to add settings for: {cameraData.CameraName}",
                 LogLevel.Warning);
+
+            if (string.IsNullOrEmpty(cameraData.Guid))
+            {
+                logger.Log(
+                   $"The camera can't find on the Genetec system: {cameraData.CameraName}",
+                   LogLevel.Warning);
+                return;
+            }
 
             var currentCameraGuid = _existingCameras.Select(p => p.EntityGuid.ToString()).ToList().FirstOrDefault(p => p.Contains(cameraData.Guid));
 
@@ -342,12 +374,12 @@ namespace CameraImporter.SystemSpecific.Genetec
             VideoCompressionCapabilities capabilities,
             ILogger logger)
         {
-            var supportedResolution = capabilities.SupportedResolutions.First(p => p.ToString() == resolution);
+            var supportedResolution = capabilities.SupportedResolutions.FirstOrDefault(p => p.ToString() == resolution);
 
             if (supportedResolution == null)
             {
                 logger.Log($"Resolution {resolution} isn't supported for this camera. Value is set to default {capabilities.SupportedResolutions.First()}", LogLevel.Warning);
-                supportedResolution = capabilities.SupportedResolutions.First();
+                supportedResolution = capabilities.SupportedResolutions.FirstOrDefault();
             }
 
             return supportedResolution;
@@ -393,7 +425,7 @@ namespace CameraImporter.SystemSpecific.Genetec
 
             foreach (var camera in _existingCameras)
             {
-                var existingCamera = cameraList.First(p => camera.EntityName.Contains(p.Ip));
+                var existingCamera = cameraList.FirstOrDefault(p => camera.EntityName.Equals(p.CameraName, StringComparison.OrdinalIgnoreCase));
 
                 if (existingCamera != null)
                 {
@@ -424,5 +456,5 @@ namespace CameraImporter.SystemSpecific.Genetec
 
             return sec;
         }
-    }   
+    }
 }

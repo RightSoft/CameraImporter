@@ -4,7 +4,6 @@ using CameraImporter.SystemSpecific.Genetec;
 using CameraImporter.SystemSpecific.Genetec.Interface;
 using CommonServiceLocator;
 using GalaSoft.MvvmLight.Ioc;
-using MilestoneImporter.ViewModel;
 
 namespace CameraImporter.ViewModel
 {

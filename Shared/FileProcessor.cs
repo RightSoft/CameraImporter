@@ -24,6 +24,7 @@ namespace CameraImporter.Shared
         private int _processedCameraCount;
         private SettingsData _settingsData;
         private List<GenetecCamera> _cameraListToBeProcessed;
+        private List<GenetecCamera> _noAddedCameras = new List<GenetecCamera>();
         private List<GenetecCamera> _existingCamerasToBeUpdated;
 
         public event EventHandler<int> ProgressBarStepsChanged;
@@ -101,7 +102,10 @@ namespace CameraImporter.Shared
                         IncreaseCurrentProgressBarState();
 
                         ExistingCameraListFound?.Invoke(this, matchingExistingCameras);
+                        return;
                     }
+
+                    AddCameras();
                 }
             }
             else
@@ -129,7 +133,6 @@ namespace CameraImporter.Shared
                 ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.CheckingExistingCameras, 1);
 
                 ProcessWithSelectedArchiver();
-
             }
 
             if (e.AvailableArchivers.Count > 1)
@@ -258,8 +261,18 @@ namespace CameraImporter.Shared
             {
                 if (!_genetecSdkWrapper.AddCamera(camera, _logger, _settingsData).Result)
                 {
-                    _logger.Log($"Adding camera failed: {camera.CameraName}", LogLevel.Warning);
+                    _processedCameraCount++;
+                    IncreaseCurrentProgressBarState();
+                    _noAddedCameras.Add(camera);
                 }
+            }
+
+            _cameraListToBeProcessed = _cameraListToBeProcessed.Except(_noAddedCameras).ToList();
+
+            if(_cameraListToBeProcessed.Count == 0)
+            {
+                _logger.Log($"No camera added or changed.", LogLevel.Info);
+                ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.ApplicationIdle, 1);
             }
         }
 

@@ -1,4 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Weavers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="FodyWeavers.xsd">
-  <Costura />
+  <Costura CreateTemporaryAssemblies='true' IncludeDebugSymbols='false'  >
+    <IncludeAssemblies>
+      Genetec.Sdk.Media
+      Genetec.Sdk
+      Galasoft.MvvmLight.Extras
+      Galasoft.MvvmLight.Platform
+      Galasoft.MvvmLight
+      CsvHelper
+      CommonServiceLocator
+    </IncludeAssemblies>
+  </Costura>
+
 </Weavers>

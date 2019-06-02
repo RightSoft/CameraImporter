@@ -11,7 +11,6 @@ namespace CameraImporter.Shared
         public static string InvalidCredentials = "Invalid credentials for:";
         public static string InternalConnectionError = "Internal error connecting to:";
         public static string LoginSucceed = "Login succeed";
-        public static string DeviceSettingGatheringError = "Can't gather device settings from Milestone server";
         public static string CameraMismatch = "Camera mismatch. Newly added camera doesn't match the uploaded file.";
         public static string DecryptContentFailed = "Decrypting import file content failed.";
     }

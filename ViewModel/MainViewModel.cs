@@ -6,7 +6,6 @@ using CameraImporter.Shared.Interface;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
 using GalaSoft.MvvmLight.Ioc;
-using MilestoneImporter.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -242,7 +241,7 @@ namespace CameraImporter.ViewModel
 
         public void ExecuteExportLog()
         {
-            var logFileFullPath = Path.Combine(Environment.CurrentDirectory, $"milestoneimporterlog[{DateTime.Now.ToString("yyyymmddhhss")}].txt");
+            var logFileFullPath = Path.Combine(Environment.CurrentDirectory, $"genetecimporterlog[{DateTime.Now.ToString("yyyymmddhhss")}].txt");
             _fileSystemWrapper.WriteTextContent(logFileFullPath, _logger.ToString());
             Process.Start(logFileFullPath);
         }

@@ -9,7 +9,8 @@
         xmlns:genetec="clr-namespace:CameraImporter.Model.Genetec"
         mc:Ignorable="d"
         DataContext="{Binding Source={StaticResource Locator}, Path=Main}"
-        Title="MainWindow" Height="450" Width="800">
+        
+        Title="Design Automator Genetec Importer" Height="450" Width="800">
     <Grid Background="White">
         <Grid Visibility="{Binding IsCameraUpdatePopupVisible, Converter={StaticResource BoolToInverseVisibilityConverter}}">
             <Grid.ColumnDefinitions>

@@ -44,11 +44,18 @@ namespace CameraImporter.ViewModel
         private string _logText = "";
         private string _processingCategory;
         private bool _isCameraUpdatePopupVisible;
+        private bool _isArchiveVisibleWarningVisible;
 
         public bool IsCameraUpdatePopupVisible
         {
             get => _isCameraUpdatePopupVisible;
             set => Set(nameof(IsCameraUpdatePopupVisible), ref _isCameraUpdatePopupVisible, value);
+        }
+
+        public bool IsArchiveVisibleWarningVisible
+        {
+            get => _isArchiveVisibleWarningVisible;
+            set => Set(nameof(IsArchiveVisibleWarningVisible), ref _isArchiveVisibleWarningVisible, value);
         }
 
         public bool IsArchiverSelectionEnabled
@@ -145,6 +152,7 @@ namespace CameraImporter.ViewModel
 
             if (AvailableArchivers.Count > 1)
             {
+                IsArchiveVisibleWarningVisible = true;
                 IsArchiverSelectionEnabled = true;
             }
             else
@@ -165,16 +173,16 @@ namespace CameraImporter.ViewModel
 
         private void OnUpdateConfirmedForExistingCameras(object sender, List<GenetecCamera> existingCameras)
         {
-            //Application.Current.Dispatcher.Invoke(new Action(() =>
-            //{
-            //    IsCameraUpdatePopupVisible = false;
-            //}));
-            //Task.Run(() =>
-            //{
-            //    _fileProcessor.AddExistingCamerasToUpdateList(existingCameras);
-            //    var cameraConfirmationViewModel = SimpleIoc.Default.GetInstance<ExistingCameraConfirmationPopupViewModel>();
-            //    cameraConfirmationViewModel.UpdateConfirmedForExistingCameras -= OnUpdateConfirmedForExistingCameras;
-            //});
+            Application.Current.Dispatcher.Invoke(new Action(() =>
+            {
+                IsCameraUpdatePopupVisible = false;
+            }));
+            Task.Run(() =>
+            {
+                _fileProcessor.AddExistingCamerasToUpdateList(existingCameras);
+                var cameraConfirmationViewModel = SimpleIoc.Default.GetInstance<ExistingCameraConfirmationPopupViewModel>();
+                cameraConfirmationViewModel.UpdateConfirmedForExistingCameras -= OnUpdateConfirmedForExistingCameras;
+            });
         }
 
         public void ExecuteClearLogCommand()

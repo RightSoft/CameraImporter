@@ -148,6 +148,12 @@ namespace CameraImporter.SystemSpecific.Genetec
             _mSdkEngine.VideoUnitManager.EnrollmentStatusChanged += VideoUnitManager_EnrollmentStatusChanged;
         }
 
+        public void ChangeUnitName(GenetecCamera camera, Guid unitGuid)
+        {
+            var videoUnit = (VideoUnit)_mSdkEngine.GetEntity(unitGuid);
+            videoUnit.Name = camera.CameraType;
+        }
+
         private void SdkEngine_LoggedOff(object sender, LoggedOffEventArgs e)
         {
             IsLoggedIn?.Invoke(this, new IsLoggedInEventArgs("SDK Logged off", false));
@@ -173,21 +179,22 @@ namespace CameraImporter.SystemSpecific.Genetec
             }
 
             var ip = new IPEndPoint(unitAddress, cameraData.Port);
-            var addVideoUnitInfos = new AddVideoUnitInfo(videoUnitProductInfo, ip, false)
+            var addVideoUnitInfo = new AddVideoUnitInfo(videoUnitProductInfo, ip, false)
             {
                 UserName = cameraData.UserName,
                 Password = CreateSecureString(cameraData.Password)
             };
 
+
             AddUnitResponse response =
-                await _mSdkEngine.VideoUnitManager.AddVideoUnit(addVideoUnitInfos, settingsData.Archiver.EntityGuid);
+                await _mSdkEngine.VideoUnitManager.AddVideoUnit(addVideoUnitInfo, settingsData.Archiver.EntityGuid);
 
             if (response != null)
             {
                 if (!response.Error.Equals(Error.None))
                 {
                     logger.Log(
-                        $"Response{Environment.NewLine}Error: {response.Error} {Environment.NewLine}Missing Information: {response.MissingInformation}", LogLevel.Error);
+                        $"Error: {response.Error} {Environment.NewLine} Missing Information: {response.MissingInformation}", LogLevel.Error);
                 }
             }
             else
@@ -198,10 +205,10 @@ namespace CameraImporter.SystemSpecific.Genetec
             return true;
         }
 
-        public bool UpdateAddedCameraSettings(GenetecCamera cameraData, ILogger logger)
+        public void UpdateAddedCameraSettings(GenetecCamera cameraData, ILogger logger)
         {
             logger.Log(
-                $"\nWill now attpemt to add settings for: {cameraData.CameraName}",
+                $"Will now attpemt to add settings for: {cameraData.CameraName}",
                 LogLevel.Warning);
 
             var currentCameraGuid = _existingCameras.Select(p => p.EntityGuid.ToString()).ToList().FirstOrDefault(p => p.Contains(cameraData.Guid));
@@ -216,6 +223,8 @@ namespace CameraImporter.SystemSpecific.Genetec
             {
                 cameraToBeUpdated.RecordingConfiguration.RetentionPeriod =
                     new TimeSpan(TryToGetRetentionValue(cameraData.Stream1Retention, logger), 0, 0, 0);
+
+                cameraToBeUpdated.Name = cameraData.CameraName;
 
                 List<VideoStream> videoStreams = new List<VideoStream>();
 
@@ -250,15 +259,23 @@ namespace CameraImporter.SystemSpecific.Genetec
                         continue;
                     }
                 }
+
+                CheckAndLogIfStreamUsed(logger, stream1AlgorithmType, firstStreamUsed);
+                CheckAndLogIfStreamUsed(logger, stream2AlgorithmType, secondStreamUsed);
             }
             else
             {
-                logger.Log($"Settings update completed for camera {cameraData.CameraName}\n", LogLevel.Info);
+                logger.Log($"Settings can't found on the server for camera {cameraData.CameraName}\n", LogLevel.Info);
+                return;
             }
 
             logger.Log($"Settings update completed for camera {cameraData.CameraName}\n", LogLevel.Info);
+        }
 
-            return true;
+        private static void CheckAndLogIfStreamUsed(ILogger logger, VideoCompressionAlgorithmType algorithmType, bool streamUsed)
+        {
+            if (!streamUsed)
+                logger.Log($"Camera doesn't have a stream for {algorithmType}. Default codec values are used", LogLevel.Warning);
         }
 
         private void UpdateCameraSettings(VideoStream videoStream, Guid schedule, string fps, string resolution, VideoCompressionCapabilities capabilities, ILogger logger)
@@ -372,7 +389,20 @@ namespace CameraImporter.SystemSpecific.Genetec
         public List<GenetecCamera> CheckIfImportedCamerasExists(List<GenetecCamera> cameraList, ILogger logger)
         {
             var cameraNamesList = _existingCameras.Select(x => x.EntityName).ToList();
-            return cameraList.Where(p => cameraNamesList.Contains(p.Ip)).ToList();
+            var existingCameraList = new List<GenetecCamera>();
+
+            foreach (var camera in _existingCameras)
+            {
+                var existingCamera = cameraList.Where(p => camera.EntityName.Contains(p.Ip)).First();
+
+                if (existingCamera != null)
+                {
+                    existingCamera.Guid = camera.EntityGuid.ToString();
+                    existingCameraList.Add(existingCamera);
+                }
+            }
+
+            return existingCameraList;
         }
 
         public void Login(SettingsData settingsData)

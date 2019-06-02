@@ -20,7 +20,7 @@ namespace CameraImporter.Shared
         private readonly IGenetecSdkWrapper _genetecSdkWrapper;
 
         private bool _isUpdating = false;
-        private bool _isArchiverSelectionInterruption = false;
+        private bool _isMultiArchierMode = false;
         private int _processStepCount;
         private int _processedCameraCount = 0;
         private SettingsData _settingsData;
@@ -51,12 +51,44 @@ namespace CameraImporter.Shared
             _genetecSdkWrapper.Init();
         }
 
+        public void Process(SettingsData settingsData)
+        {
+            _settingsData = settingsData;
+
+            if (_isMultiArchierMode)
+            {
+                ProcessWithSelectedArchiver();
+                return;
+            }
+
+            _existingCamerasToBeUpdated = new List<GenetecCamera>();
+
+            try
+            {
+                if (!TryParseCameras())
+                {
+                    return;
+                }
+
+                IncreaseCurrentProgressBarState();
+                ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.LoggingIn, 1);
+
+                if (ValidateLoginInformation(settingsData))
+                {
+                    Login(settingsData);
+                }
+            }
+            catch (Exception e)
+            {
+                ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.ApplicationIdle, 1);
+                _logger.Log(e.Message, LogLevel.Error);
+            }
+        }
+
         private void OnAddingCameraCompleted(object sender, EntityModel e)
         {
             _processedCameraCount++;
             IncreaseCurrentProgressBarState();
-
-            _logger.Log($"Camera added successfully: {e.EntityName}", LogLevel.Info);
 
             var addedCamera = _cameraListToBeProcessed.FirstOrDefault(p => p.Ip.Equals(e.EntityName));
 
@@ -65,6 +97,9 @@ namespace CameraImporter.Shared
                 //we do this because enrollment doesn't return camera guid and we have to query the server 3 times to get that value
                 //these last 17 characters are the same for the unit and children
                 addedCamera.Guid = e.EntityGuid.ToString().Right(17);
+
+                _genetecSdkWrapper.ChangeUnitName(addedCamera, e.EntityGuid);
+                _logger.Log($"Camera added successfully: {addedCamera.CameraName}", LogLevel.Info);
             }
 
             if (_processedCameraCount == _cameraListToBeProcessed.Count)
@@ -80,13 +115,11 @@ namespace CameraImporter.Shared
             {
                 if (!e.IsExistingCamerasFound)
                 {
-
                     _logger.Log("There are no cameras added to Genetec prior to this import process.", LogLevel.Info);
 
                     IncreaseCurrentProgressBarState();
 
                     AddCameras();
-
                 }
                 else
                 {
@@ -125,16 +158,18 @@ namespace CameraImporter.Shared
 
             if (e.AvailableArchivers.Count == 1)
             {
-                _logger.Log($"Only one Archiver found (Archiver Name:{e.AvailableArchivers.First().EntityName} The import will automatically continue using this Archiver", LogLevel.Info);
+                _logger.Log($"Only one archiver found (Archiver Name: {e.AvailableArchivers.First().EntityName} The import will automatically continue using this archiver", LogLevel.Info);
                 ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.CheckingExistingCameras, 1);
-                ProcessWithSelectedArchiver(e.AvailableArchivers.FirstOrDefault());
+
+                ProcessWithSelectedArchiver();
 
             }
 
             if (e.AvailableArchivers.Count > 1)
             {
                 ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.ApplicationIdle, 1);
-                _logger.Log("Multiple Archivers found. Please select which Archiver you want to proceed", LogLevel.Warning);
+                _logger.Log("Multiple archivers found. Please select which archiver you want to proceed", LogLevel.Warning);
+                _isMultiArchierMode = true;
             }
 
             AvailableArchiversFound?.Invoke(this, e.AvailableArchivers);
@@ -158,40 +193,6 @@ namespace CameraImporter.Shared
             _genetecSdkWrapper.FetchAvailableArchivers();
         }
 
-        public void Process(SettingsData settingsData)
-        {
-            _settingsData = settingsData;
-
-            if (_isArchiverSelectionInterruption)
-            {
-                _isArchiverSelectionInterruption = false;
-                ProcessWithSelectedArchiver(_settingsData.Archiver);
-            }
-
-            _existingCamerasToBeUpdated = new List<GenetecCamera>();
-
-            try
-            {
-                if (!TryParseCameras())
-                {
-                    return;
-                }
-
-                IncreaseCurrentProgressBarState();
-                ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.LoggingIn, 1);
-
-                if (ValidateLoginInformation(settingsData))
-                {
-                    Login(settingsData);
-                }
-            }
-            catch (Exception e)
-            {
-                ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.ApplicationIdle, 1);
-                _logger.Log(e.Message, LogLevel.Error);
-            }
-        }
-
         private bool ValidateLoginInformation(SettingsData settingsData)
             => settingsData != null &&
                    !string.IsNullOrEmpty(settingsData.UserName) &&
@@ -203,10 +204,9 @@ namespace CameraImporter.Shared
             _genetecSdkWrapper.Login(settingsData);
         }
 
-        public void ProcessWithSelectedArchiver(EntityModel entityModel)
+        public void ProcessWithSelectedArchiver()
         {
             _genetecSdkWrapper.FetchAvailableCameras();
-            _settingsData.Archiver = entityModel;
         }
 
         public void AddExistingCamerasToUpdateList(List<GenetecCamera> existingCamerasToBeUpdated)
@@ -219,8 +219,10 @@ namespace CameraImporter.Shared
 
                 //add existing cameras for settings update
                 _cameraListToBeProcessed.AddRange(_existingCamerasToBeUpdated);
+
+                UpdateCameraSettings();
+
                 ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.ApplicationIdle, _cameraListToBeProcessed.Count);
-                LogImportingCompleted();
             }
             catch (Exception e)
             {

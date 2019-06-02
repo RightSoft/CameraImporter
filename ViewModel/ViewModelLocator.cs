@@ -4,6 +4,7 @@ using CameraImporter.SystemSpecific.Genetec;
 using CameraImporter.SystemSpecific.Genetec.Interface;
 using CommonServiceLocator;
 using GalaSoft.MvvmLight.Ioc;
+using MilestoneImporter.ViewModel;
 
 namespace CameraImporter.ViewModel
 {
@@ -14,7 +15,7 @@ namespace CameraImporter.ViewModel
             ServiceLocator.SetLocatorProvider(() => SimpleIoc.Default);
 
             SimpleIoc.Default.Register<MainViewModel>();
-            //SimpleIoc.Default.Register<ExistingCameraConfirmationPopupViewModel>();
+            SimpleIoc.Default.Register<ExistingCameraConfirmationPopupViewModel>();
             SimpleIoc.Default.Register<IFileProcessor, FileProcessor>();
             SimpleIoc.Default.Register<ICsvToCameraParser, CsvToCameraToCameraParser>();
             SimpleIoc.Default.Register<ILogger, Logger>();
@@ -31,12 +32,12 @@ namespace CameraImporter.ViewModel
             }
         }
 
-        //public ExistingCameraConfirmationPopupViewModel ExistingCameraConfirmationPopup
-        //{
-        //    get
-        //    {
-        //        return ServiceLocator.Current.GetInstance<ExistingCameraConfirmationPopupViewModel>();
-        //    }
-        //}
+        public ExistingCameraConfirmationPopupViewModel ExistingCameraConfirmationPopup
+        {
+            get
+            {
+                return ServiceLocator.Current.GetInstance<ExistingCameraConfirmationPopupViewModel>();
+            }
+        }
     }
 }

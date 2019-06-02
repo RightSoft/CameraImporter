@@ -2,7 +2,6 @@
 using CameraImporter.Model;
 using CameraImporter.Model.Genetec;
 using CameraImporter.Shared.Interface;
-using CameraImporter.SystemSpecific.Genetec;
 using CameraImporter.SystemSpecific.Genetec.Interface;
 using CameraImporter.ViewModel;
 using System;
@@ -19,10 +18,10 @@ namespace CameraImporter.Shared
         private readonly ILogger _logger;
         private readonly IGenetecSdkWrapper _genetecSdkWrapper;
 
-        private bool _isUpdating = false;
-        private bool _isMultiArchierMode = false;
+        private bool _isUpdating;
+        private bool _isMultiArchierMode;
         private int _processStepCount;
-        private int _processedCameraCount = 0;
+        private int _processedCameraCount;
         private SettingsData _settingsData;
         private List<GenetecCamera> _cameraListToBeProcessed;
         private List<GenetecCamera> _existingCamerasToBeUpdated;
@@ -49,40 +48,6 @@ namespace CameraImporter.Shared
             _genetecSdkWrapper.ExistingCameraListFound += OnExistingCameraListFound;
             _genetecSdkWrapper.AddingCameraCompleted += OnAddingCameraCompleted;
             _genetecSdkWrapper.Init();
-        }
-
-        public void Process(SettingsData settingsData)
-        {
-            _settingsData = settingsData;
-
-            if (_isMultiArchierMode)
-            {
-                ProcessWithSelectedArchiver();
-                return;
-            }
-
-            _existingCamerasToBeUpdated = new List<GenetecCamera>();
-
-            try
-            {
-                if (!TryParseCameras())
-                {
-                    return;
-                }
-
-                IncreaseCurrentProgressBarState();
-                ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.LoggingIn, 1);
-
-                if (ValidateLoginInformation(settingsData))
-                {
-                    Login(settingsData);
-                }
-            }
-            catch (Exception e)
-            {
-                ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.ApplicationIdle, 1);
-                _logger.Log(e.Message, LogLevel.Error);
-            }
         }
 
         private void OnAddingCameraCompleted(object sender, EntityModel e)
@@ -158,7 +123,9 @@ namespace CameraImporter.Shared
 
             if (e.AvailableArchivers.Count == 1)
             {
-                _logger.Log($"Only one archiver found (Archiver Name: {e.AvailableArchivers.First().EntityName} The import will automatically continue using this archiver", LogLevel.Info);
+                _logger.Log(
+                    $"Only one archiver found (Archiver Name: {e.AvailableArchivers.First().EntityName} The import will automatically continue using this archiver",
+                    LogLevel.Info);
                 ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.CheckingExistingCameras, 1);
 
                 ProcessWithSelectedArchiver();
@@ -173,6 +140,40 @@ namespace CameraImporter.Shared
             }
 
             AvailableArchiversFound?.Invoke(this, e.AvailableArchivers);
+        }
+
+        public void Process(SettingsData settingsData)
+        {
+            _settingsData = settingsData;
+
+            if (_isMultiArchierMode)
+            {
+                ProcessWithSelectedArchiver();
+                return;
+            }
+
+            _existingCamerasToBeUpdated = new List<GenetecCamera>();
+
+            try
+            {
+                if (!TryParseCameras())
+                {
+                    return;
+                }
+
+                IncreaseCurrentProgressBarState();
+                ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.LoggingIn, 1);
+
+                if (ValidateLoginInformation(settingsData))
+                {
+                    Login(settingsData);
+                }
+            }
+            catch (Exception e)
+            {
+                ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.ApplicationIdle, 1);
+                _logger.Log(e.Message, LogLevel.Error);
+            }
         }
 
         private void OnLoggedInChanged(object sender, IsLoggedInEventArgs e)
@@ -280,6 +281,11 @@ namespace CameraImporter.Shared
         private void CheckSettingsDataIsValid(SettingsData settingsData)
         {
             string exceptionOnProperty = string.Empty;
+
+            if (string.IsNullOrEmpty(settingsData.ServerAddress))
+            {
+                exceptionOnProperty = "Server Address";
+            }
 
             if (!string.IsNullOrEmpty(exceptionOnProperty))
             {

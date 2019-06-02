@@ -17,6 +17,7 @@ using System.Linq;
 using System.Net;
 using System.Security;
 using System.Threading.Tasks;
+using CameraImporter.Model;
 
 namespace CameraImporter.SystemSpecific.Genetec
 {
@@ -226,8 +227,6 @@ namespace CameraImporter.SystemSpecific.Genetec
 
                 cameraToBeUpdated.Name = cameraData.CameraName;
 
-                List<VideoStream> videoStreams = new List<VideoStream>();
-
                 var stream1AlgorithmType = MapImportedCamAlgorithmType(cameraData.Stream1Codec);
                 var stream2AlgorithmType = MapImportedCamAlgorithmType(cameraData.Stream2Codec);
 
@@ -278,7 +277,12 @@ namespace CameraImporter.SystemSpecific.Genetec
                 logger.Log($"Camera doesn't have a stream for {algorithmType}. Default codec values are used", LogLevel.Warning);
         }
 
-        private void UpdateCameraSettings(VideoStream videoStream, Guid schedule, string fps, string resolution, VideoCompressionCapabilities capabilities, ILogger logger)
+        private void UpdateCameraSettings(VideoStream videoStream,
+            Guid schedule,
+            string fps,
+            string resolution,
+            VideoCompressionCapabilities capabilities,
+            ILogger logger)
         {
             videoStream.SetFrameRate(schedule, TryToGetFpsValue(fps, capabilities, logger));
             videoStream.SetResolution(schedule, TryToGetResolution(resolution, capabilities, logger));
@@ -334,7 +338,9 @@ namespace CameraImporter.SystemSpecific.Genetec
             return VideoCompressionAlgorithmType.Unknown;
         }
 
-        private StreamSupportedResolution TryToGetResolution(string resolution, VideoCompressionCapabilities capabilities, ILogger logger)
+        private StreamSupportedResolution TryToGetResolution(string resolution,
+            VideoCompressionCapabilities capabilities,
+            ILogger logger)
         {
             var supportedResolution = capabilities.SupportedResolutions.First(p => p.ToString() == resolution);
 
@@ -381,19 +387,13 @@ namespace CameraImporter.SystemSpecific.Genetec
             }
         }
 
-        public bool CheckIfServerExists(string settingsDataServerName, out string availableServerNames)
-        {
-            throw new NotImplementedException();
-        }
-
         public List<GenetecCamera> CheckIfImportedCamerasExists(List<GenetecCamera> cameraList, ILogger logger)
         {
-            var cameraNamesList = _existingCameras.Select(x => x.EntityName).ToList();
             var existingCameraList = new List<GenetecCamera>();
 
             foreach (var camera in _existingCameras)
             {
-                var existingCamera = cameraList.Where(p => camera.EntityName.Contains(p.Ip)).First();
+                var existingCamera = cameraList.First(p => camera.EntityName.Contains(p.Ip));
 
                 if (existingCamera != null)
                 {
@@ -424,41 +424,5 @@ namespace CameraImporter.SystemSpecific.Genetec
 
             return sec;
         }
-    }
-
-    public class ExistingCameraListFoundEventArgs
-    {
-        public bool IsExistingCamerasFound;
-        public List<EntityModel> ExistingCameras;
-
-        public ExistingCameraListFoundEventArgs(bool isExistingCamerasFound, List<EntityModel> existingCameras)
-        {
-            IsExistingCamerasFound = isExistingCamerasFound;
-            ExistingCameras = existingCameras;
-        }
-    }
-
-    public class AvailableArchiversFoundEventArgs : EventArgs
-    {
-        public bool IsArchiversFound;
-        public List<EntityModel> AvailableArchivers;
-
-        public AvailableArchiversFoundEventArgs(bool isArchiversFound, List<EntityModel> availableArchivers)
-        {
-            IsArchiversFound = isArchiversFound;
-            AvailableArchivers = availableArchivers;
-        }
-    }
-
-    public class IsLoggedInEventArgs : EventArgs
-    {
-        public string Message;
-        public bool IsLoggedIn;
-
-        public IsLoggedInEventArgs(string message, bool isLoggedIn)
-        {
-            Message = message;
-            IsLoggedIn = isLoggedIn;
-        }
-    }
+    }   
 }

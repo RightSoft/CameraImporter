@@ -119,7 +119,9 @@
     <Compile Include="Extensions\StringExtension.cs" />
     <Compile Include="Model\BaseCamera.cs" />
     <Compile Include="Model\CameraValidationSettings.cs" />
+    <Compile Include="Model\EventArgs.cs" />
     <Compile Include="Model\Genetec\EntityModel.cs" />
+    <Compile Include="Model\Genetec\EventArgs.cs" />
     <Compile Include="Model\Genetec\GenetecCamera.cs" />
     <Compile Include="Model\ProcessCategoryEnum.cs" />
     <Compile Include="Shared\CsvToCameraToCameraParser.cs" />

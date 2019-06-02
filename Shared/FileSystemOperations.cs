@@ -13,13 +13,10 @@ namespace CameraImporter.Shared
 
         public string GetFileTextContent(string path, string decryptionKey)
         {
-            return File.ReadAllText(path);
-
             var encryptedContent = File.ReadAllText(path);
             EncryptionUtil util = new EncryptionUtil(decryptionKey);
             return util.Decrypt(encryptedContent);
         }
-
 
         public bool IsFileExpectedFileFormat(string file, string expectedFileFormat)
         {

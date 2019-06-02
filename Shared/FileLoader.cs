@@ -26,12 +26,15 @@ namespace CameraImporter.Shared
             {
                 throw new Exception(ExceptionMessage.NoFileFound);
             }
-            else if (numberOfFiles > 1)
+
+            if (numberOfFiles > 1)
             {
                 throw new Exception(ExceptionMessage.MultipleFilesFound);
             }
 
-            var decryptionKeyFiles = files.Where(file => _fileSystemWrapper.IsFileExpectedFileFormat(file, Constants.DecryptionKeyFileFormat)).ToList();
+            var decryptionKeyFiles = files.Where(file => _fileSystemWrapper.IsFileExpectedFileFormat(file,
+                    Constants.DecryptionKeyFileFormat))
+                .ToList();
 
             if (decryptionKeyFiles.Count() > 1)
             {
@@ -44,7 +47,9 @@ namespace CameraImporter.Shared
                 decryptionKey = System.IO.File.ReadAllText(decryptionKeyFiles.First());
             }
 
-            return _fileSystem.GetFileTextContent(files.First(file => _fileSystemWrapper.IsFileExpectedFileFormat(file, Constants.ImportedFileFormat)), decryptionKey);
+            return _fileSystem.GetFileTextContent(files.First(file => _fileSystemWrapper.IsFileExpectedFileFormat(file,
+                    Constants.ImportedFileFormat)),
+                decryptionKey);
         }
     }
 }

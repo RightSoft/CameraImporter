@@ -233,7 +233,7 @@ namespace CameraImporter.SystemSpecific.Genetec
         public void UpdateAddedCameraSettings(GenetecCamera cameraData, ILogger logger)
         {
             logger.Log(
-                $"Will now attpemt to add settings for: {cameraData.CameraName}",
+                $"Will now attempt to add settings for: {cameraData.CameraName}",
                 LogLevel.Warning);
 
             if (string.IsNullOrEmpty(cameraData.Guid))

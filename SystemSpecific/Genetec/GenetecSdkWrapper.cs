@@ -18,6 +18,8 @@ using System.Net;
 using System.Security;
 using System.Threading.Tasks;
 using CameraImporter.Model;
+using System.Threading;
+using System.Collections.ObjectModel;
 
 namespace CameraImporter.SystemSpecific.Genetec
 {
@@ -30,7 +32,7 @@ namespace CameraImporter.SystemSpecific.Genetec
 
         public event EventHandler<IsLoggedInEventArgs> IsLoggedIn;
         public event EventHandler<AvailableArchiversFoundEventArgs> AvailableArchiversFound;
-        public event EventHandler<EntityModel> AddingCameraCompleted;
+        public event EventHandler<AddingCameraCompletedEventArgs> AddingCameraCompleted;
         public event EventHandler<ExistingCameraListFoundEventArgs> ExistingCameraListFound;
 
         public void Init()
@@ -104,12 +106,13 @@ namespace CameraImporter.SystemSpecific.Genetec
 
         private void VideoUnitManager_EnrollmentStatusChanged(object sender, UnitEnrolledEventArgs e)
         {
-            if (e.EnrollmentResult == EnrollmentResult.Added)
+            if (e.EnrollmentResult != EnrollmentResult.Connecting)
             {
-                AddingCameraCompleted?.Invoke(this, new EntityModel
+                AddingCameraCompleted?.Invoke(this, new AddingCameraCompletedEventArgs
                 {
                     EntityName = e.Address,
-                    EntityGuid = e.Unit
+                    EntityGuid = e.Unit,
+                    EnrollmentResult = e.EnrollmentResult
                 });
             }
         }
@@ -265,30 +268,39 @@ namespace CameraImporter.SystemSpecific.Genetec
                 bool firstStreamUsed = false;
                 bool secondStreamUsed = false;
 
-                foreach (Guid guid in cameraToBeUpdated.Streams)
+                ReadOnlyCollection<Guid> streams = cameraToBeUpdated.Streams;
+
+                foreach (Guid guid in streams)
                 {
                     VideoStream videoStream = _mSdkEngine.GetEntity(guid) as VideoStream;
+
+                    _mSdkEngine.TransactionManager.CreateTransaction();
 
                     if (firstStreamUsed && secondStreamUsed) break;
 
                     if (!VideoStreamIsUpdatable(videoStream, stream1AlgorithmType, stream2AlgorithmType)) { continue; }
 
-                    var schedule = videoStream.VideoCompressions.First().Schedule;
                     var capabilities = videoStream.VideoCompressionCapabilities;
 
-                    if (!firstStreamUsed && stream1AlgorithmType == videoStream.VideoCompressionAlgorithm)
+                    if (stream1AlgorithmType == videoStream.VideoCompressionAlgorithm && videoStream.Name.Contains(" - 1", StringComparison.OrdinalIgnoreCase))
                     {
                         firstStreamUsed = true;
-                        UpdateCameraSettings(videoStream, schedule, cameraData.Stream1Fps, cameraData.Stream1Resolution, capabilities, logger);
+                        UpdateCameraSettings(videoStream, Schedule.AlwaysScheduleGuid, cameraData.Stream1Fps, cameraData.Stream1Resolution, capabilities, logger);
+
+                        _mSdkEngine.TransactionManager.CommitTransaction(true);
                         continue;
                     }
 
-                    if (!secondStreamUsed && stream2AlgorithmType == videoStream.VideoCompressionAlgorithm)
+                    if (stream2AlgorithmType == videoStream.VideoCompressionAlgorithm && videoStream.Name.Contains(" - 2", StringComparison.OrdinalIgnoreCase))
                     {
                         secondStreamUsed = true;
-                        UpdateCameraSettings(videoStream, schedule, cameraData.Stream2Fps, cameraData.Stream2Resolution, capabilities, logger);
+                        UpdateCameraSettings(videoStream, Schedule.AlwaysScheduleGuid, cameraData.Stream2Fps, cameraData.Stream2Resolution, capabilities, logger);
+
+                        _mSdkEngine.TransactionManager.CommitTransaction(true);
                         continue;
                     }
+
+                    _mSdkEngine.TransactionManager.CommitTransaction(true);
                 }
 
                 CheckAndLogIfStreamUsed(logger, stream1AlgorithmType, firstStreamUsed);

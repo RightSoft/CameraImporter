@@ -51,21 +51,27 @@ namespace CameraImporter.Shared
             _genetecSdkWrapper.Init();
         }
 
-        private void OnAddingCameraCompleted(object sender, EntityModel e)
+        private void OnAddingCameraCompleted(object sender, AddingCameraCompletedEventArgs e)
         {
             _processedCameraCount++;
             IncreaseCurrentProgressBarState();
+            var camera = _cameraListToBeProcessed.FirstOrDefault(p => p.Ip.Equals(e.EntityName));
 
-            var addedCamera = _cameraListToBeProcessed.FirstOrDefault(p => p.Ip.Equals(e.EntityName));
-
-            if (addedCamera != null)
+            if (e.EnrollmentResult == Genetec.Sdk.EnrollmentResult.Added)
             {
-                //we do this because enrollment doesn't return camera guid and we have to query the server 3 times to get that value
-                //these last 17 characters are the same for the unit and children
-                addedCamera.Guid = e.EntityGuid.ToString().Right(17);
+                if (camera != null)
+                {
+                    //we do this because enrollment doesn't return camera guid and we have to query the server 3 times to get that value
+                    //these last 17 characters are the same for the unit and children
+                    camera.Guid = e.EntityGuid.ToString().Right(17);
 
-                _genetecSdkWrapper.ChangeUnitName(addedCamera, e.EntityGuid);
-                _logger.Log($"Camera added successfully: {addedCamera.CameraName}", LogLevel.Info);
+                    _genetecSdkWrapper.ChangeUnitName(camera, e.EntityGuid);
+                    _logger.Log($"Unit added successfully: {camera.CameraName}", LogLevel.Info);
+                }
+            }
+            else
+            {
+                _logger.Log($"Can't add the unit {(camera != null ? camera.CameraName : string.Empty)}: {e.EnrollmentResult}", LogLevel.Warning);
             }
 
             if (_processedCameraCount == _cameraListToBeProcessed.Count)
@@ -269,7 +275,7 @@ namespace CameraImporter.Shared
 
             _cameraListToBeProcessed = _cameraListToBeProcessed.Except(_noAddedCameras).ToList();
 
-            if(_cameraListToBeProcessed.Count == 0)
+            if (_cameraListToBeProcessed.Count == 0)
             {
                 _logger.Log($"No camera added or changed.", LogLevel.Info);
                 ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.ApplicationIdle, 1);

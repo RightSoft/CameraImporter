@@ -1,10 +1,10 @@
-﻿using System;
-using System.Threading.Tasks;
-using CameraImporter.ViewModel;
-using System.Collections.Generic;
-using CameraImporter.Model;
+﻿using CameraImporter.Model;
 using CameraImporter.Model.Genetec;
 using CameraImporter.Shared.Interface;
+using CameraImporter.ViewModel;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace CameraImporter.SystemSpecific.Genetec.Interface
 {
@@ -14,6 +14,7 @@ namespace CameraImporter.SystemSpecific.Genetec.Interface
         void UpdateAddedCameraSettings(GenetecCamera cameraData, ILogger logger);
         List<GenetecCamera> CheckIfImportedCamerasExists(List<GenetecCamera> cameraListToBeProcessed, ILogger logger);
         void Login(SettingsData settingsData);
+        void LogOff();
         event EventHandler<IsLoggedInEventArgs> IsLoggedIn;
         event EventHandler<AvailableArchiversFoundEventArgs> AvailableArchiversFound;
         event EventHandler<ExistingCameraListFoundEventArgs> ExistingCameraListFound;

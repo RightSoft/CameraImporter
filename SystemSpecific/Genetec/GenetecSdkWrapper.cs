@@ -18,7 +18,6 @@ using System.Net;
 using System.Security;
 using System.Threading.Tasks;
 using CameraImporter.Model;
-using System.Threading;
 using System.Collections.ObjectModel;
 
 namespace CameraImporter.SystemSpecific.Genetec
@@ -39,7 +38,7 @@ namespace CameraImporter.SystemSpecific.Genetec
         {
             _mSdkEngine = new Engine
             {
-                ClientCertificate = "KxsD11z743Hf5Gq9mv3+5ekxzemlCiUXkTFY5ba1NOGcLCmGstt2n0zYE9NsNimv"
+                ClientCertificate = "tl05KjMANfyjztZV3UG/Um3YMynmofyuC2uK80hlX6+hEK15ejVUYXptI+2OQhAP"
             };
 
             _mSdkEngine.LoggedOn += SdkEngine_LoggedOn;
@@ -54,7 +53,7 @@ namespace CameraImporter.SystemSpecific.Genetec
 
         public void FetchAvailableCameras()
         {
-            System.Windows.Application.Current.Dispatcher.Invoke(_existingCameras.Clear);
+            System.Windows.Application.Current.Dispatcher?.Invoke(_existingCameras.Clear);
 
             var camerasQuery = _mSdkEngine.ReportManager.CreateReportQuery(ReportType.EntityConfiguration) as EntityConfigurationQuery;
             camerasQuery?.EntityTypeFilter.Add(EntityType.Camera);
@@ -455,6 +454,12 @@ namespace CameraImporter.SystemSpecific.Genetec
                 _mSdkEngine.BeginLogOn(settingsData.ServerAddress, settingsData.UserName, settingsData.Password);
             else
                 IsLoggedIn?.Invoke(this, new IsLoggedInEventArgs("SDK Logged on", true));
+        }
+
+        public void LogOff()
+        {
+            if (_mSdkEngine != null && _mSdkEngine.IsConnected)
+                _mSdkEngine.BeginLogOff();
         }
 
         private SecureString CreateSecureString(string str)

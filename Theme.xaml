@@ -24,6 +24,11 @@
         <Setter Property="TextAlignment" Value="Left"></Setter>
     </Style>
 
+    <Style x:Key="PasswordBoxStyle" TargetType="PasswordBox">
+        <Setter Property="Background" Value="White"></Setter>
+        <Setter Property="Padding" Value="3"></Setter>
+    </Style>
+
     <Style x:Key="MainXamlItemDocker" TargetType="DockPanel">
         <Setter Property="LastChildFill" Value="True"></Setter>
         <Setter Property="Height" Value="30"></Setter>

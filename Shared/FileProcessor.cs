@@ -327,6 +327,7 @@ namespace CameraImporter.Shared
 
         private void LogImportingCompleted()
         {
+            _genetecSdkWrapper.LogOff();
             _logger.Log("Importing completed.", LogLevel.Info);
         }
     }

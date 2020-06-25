@@ -164,7 +164,6 @@ namespace CameraImporter.SystemSpecific.Genetec
         private void SdkEngine_LoggedOff(object sender, LoggedOffEventArgs e)
         {
             IsLoggedIn?.Invoke(this, new IsLoggedInEventArgs("SDK Logged off", false));
-            _mSdkEngine.VideoUnitManager.EnrollmentStatusChanged -= VideoUnitManager_EnrollmentStatusChanged;
         }
 
         private void SdkEngine_LogonFailed(object sender, LogonFailedEventArgs e)
@@ -459,7 +458,10 @@ namespace CameraImporter.SystemSpecific.Genetec
         public void LogOff()
         {
             if (_mSdkEngine != null && _mSdkEngine.IsConnected)
+            {
+                _mSdkEngine.VideoUnitManager.EnrollmentStatusChanged -= VideoUnitManager_EnrollmentStatusChanged;
                 _mSdkEngine.BeginLogOff();
+            }
         }
 
         private SecureString CreateSecureString(string str)

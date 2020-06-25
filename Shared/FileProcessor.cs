@@ -246,7 +246,9 @@ namespace CameraImporter.Shared
             ChangeProgressBarToInitialStateOfAProcess(ApplicationStateEnum.ImportingFile, 1);
 
             CheckSettingsDataIsValid(_settingsData);
-            var fileContent = _fileLoader.Load();
+            //var fileContent = _fileLoader.Load();
+            //todo remove
+            var fileContent = "MACAddress,Ip,UserName,Password,Manufacturer,ProductType,CameraType,CameraName,RecordingMode,Stream1Codec,Stream1Fps,Stream1Resolution,Stream1Retention,Stream2Codec,Stream2Fps,Stream2Resolution,Stream2Retention\r\n003046FF827C,10.10.10.212,root,pass,onvif,All,C-07-001,EU-C-07-001-CAM,3,JPEG,25,352x240,30,JPEG,25,352x240,30\r\nBCC342167554,10.10.10.213,root,pass,onvif,All,C-07-002,EU-C-07-002-CAM,3,H264 Baseline Profile,15,640x360,28,H264 Baseline Profile,15,640x360,24\r\n0800239C0CDC,10.10.10.214,root,pass,onvif,All,C-07-003,EU-C-07-003-CAM,3,JPEG,10,1280x960,30,JPEG,10,640x480,30\r\n00408CE37ED4,10.10.10.215,root,pass,onvif,All,C-07-004,EU-C-07-004-CAM,1,MJPEG,15,1280x720,30,MJPEG,15,1280x720,30\r\n";
             _cameraListToBeProcessed = _csvToCameraParser.Parse(fileContent);
 
             if (!_cameraListToBeProcessed.Any())

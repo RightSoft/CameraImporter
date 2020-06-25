@@ -11,5 +11,4 @@
       CommonServiceLocator
     </IncludeAssemblies>
   </Costura>
-
 </Weavers>

@@ -12,5 +12,6 @@
         public string Manufacturer { get; set; } = "onvif";
         public string ProductType { get; set; } = "All";
         public string Guid { get; set; } = "";
+        public string RecordingMode { get; set; } = "3";
     }
 }

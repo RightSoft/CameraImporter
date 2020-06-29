@@ -131,6 +131,7 @@ namespace CameraImporter.SystemSpecific.Genetec
             {
                 Guid archiverGuid = (Guid)dataRow[0];
                 var archiverEntity = _mSdkEngine.GetEntity<Role>(archiverGuid);
+
                 if (archiverEntity == null)
                 {
                     continue;
@@ -165,7 +166,6 @@ namespace CameraImporter.SystemSpecific.Genetec
         private void SdkEngine_LoggedOff(object sender, LoggedOffEventArgs e)
         {
             IsLoggedIn?.Invoke(this, new IsLoggedInEventArgs("SDK Logged off", false));
-            _mSdkEngine.VideoUnitManager.EnrollmentStatusChanged -= VideoUnitManager_EnrollmentStatusChanged;
         }
 
         private void SdkEngine_LogonFailed(object sender, LogonFailedEventArgs e)
@@ -257,8 +257,22 @@ namespace CameraImporter.SystemSpecific.Genetec
 
             if (cameraToBeUpdated != null)
             {
+                var recordingMode = GetRecordModeForCamera(cameraData.RecordingMode);
+
+                cameraToBeUpdated.RecordingConfiguration.SetScheduledRecordingModes(recordingMode);
+
                 cameraToBeUpdated.RecordingConfiguration.RetentionPeriod =
                     new TimeSpan(TryToGetRetentionValue(cameraData.Stream1Retention, logger), 0, 0, 0);
+
+                if(recordingMode == ScheduledRecordingMode.OnMotionOrManualRecording)
+                {
+                    var motionDetectionConfiguration = cameraToBeUpdated.MotionDetectionConfigurations.First();
+                    if (motionDetectionConfiguration != null)
+                    {
+                        motionDetectionConfiguration.IsEnabled = true;
+                        cameraToBeUpdated.UpdateMotionDetectionConfiguration(motionDetectionConfiguration);
+                    }
+                }
 
                 cameraToBeUpdated.Name = cameraData.CameraName;
 
@@ -313,6 +327,34 @@ namespace CameraImporter.SystemSpecific.Genetec
             }
 
             logger.Log($"Settings update completed for camera {cameraData.CameraName}\n", LogLevel.Info);
+        }
+
+        private ScheduledRecordingMode GetRecordModeForCamera(string recordMode)
+        {
+            if(int.TryParse(recordMode,out int intRecordMode))
+            {
+                if (intRecordMode == 4)
+                    return ScheduledRecordingMode.ManualRecording;
+
+                if (intRecordMode == 1)
+                    return ScheduledRecordingMode.OffRecording;
+
+                if (intRecordMode == 2)
+                    return ScheduledRecordingMode.OnMotionOrManualRecording;
+            }
+            else
+            {
+                if (recordMode == "ManualRecording")
+                    return ScheduledRecordingMode.ManualRecording;
+
+                if (recordMode == "OffRecording")
+                    return ScheduledRecordingMode.OffRecording;
+
+                if (recordMode == "OnMotionOrManualRecording")
+                    return ScheduledRecordingMode.OnMotionOrManualRecording;
+            }
+
+            return ScheduledRecordingMode.ContinuousRecording;
         }
 
         private static void CheckAndLogIfStreamUsed(ILogger logger, VideoCompressionAlgorithmType algorithmType, bool streamUsed)
@@ -455,6 +497,15 @@ namespace CameraImporter.SystemSpecific.Genetec
                 _mSdkEngine.BeginLogOn(settingsData.ServerAddress, settingsData.UserName, settingsData.Password);
             else
                 IsLoggedIn?.Invoke(this, new IsLoggedInEventArgs("SDK Logged on", true));
+        }
+
+        public void LogOff()
+        {
+            if (_mSdkEngine != null && _mSdkEngine.IsConnected)
+            {
+                _mSdkEngine.VideoUnitManager.EnrollmentStatusChanged -= VideoUnitManager_EnrollmentStatusChanged;
+                _mSdkEngine.BeginLogOff();
+            }
         }
 
         private SecureString CreateSecureString(string str)

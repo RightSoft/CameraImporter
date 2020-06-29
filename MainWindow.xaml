@@ -41,8 +41,8 @@
 
                 <DockPanel Style="{StaticResource MainXamlItemDocker}">
                     <TextBlock VerticalAlignment="Center" Width="175">Password</TextBlock>
-                    <TextBox Style="{StaticResource TextboxStyle}" VerticalAlignment="Center" Margin="5,0" 
-                          Text="{Binding SettingsData.Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                    <PasswordBox Style="{StaticResource PasswordBoxStyle}" VerticalAlignment="Center" Margin="5,0" 
+                                 PasswordChar="*" PasswordChanged="PasswordBox_PasswordChanged"></PasswordBox>
                 </DockPanel>
 
                 <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,15,0,5" FontWeight="Bold">ARCHIVER</TextBlock>
